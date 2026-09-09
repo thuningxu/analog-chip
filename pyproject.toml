@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "hdl21>=7.0.0",
+    "klayout>=0.30.12",
     "matplotlib>=3.11.1",
     "numpy>=2.5.3",
     "sky130-hdl21>=7.0.0",

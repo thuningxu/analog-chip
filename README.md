@@ -36,11 +36,18 @@ What is here:
 
 What is **not** here — do not read any of it into the numbers below:
 
-- **No layout.** No floorplan, no GDS, no place-and-route, no routing, no DRC or LVS, no
-  parasitic extraction, no tapeout, no silicon. Nothing in this repository has a physical
-  dimension other than the access transistor's W and L.
-- **No extracted parasitics.** `r_row` / `r_col` / `c_row` / `c_col` are per-pitch values
-  *you assume*, not values back-annotated from a physical implementation.
+- **No floorplan, no place-and-route, no tapeout, no silicon.** `layout_oracle.py` and
+  `array_layout.py` do draw sky130 GDS, run the PDK DRC deck on it, LVS one transistor, and
+  derive `r_row` / `r_col` / `c_row` / `c_col` from the drawn geometry — see
+  [docs/LAYOUT.md](docs/LAYOUT.md). That is an interconnect skeleton and a parasitics oracle,
+  not a physical implementation.
+- **No parasitic extraction.** [docs/LAYOUT.md](docs/LAYOUT.md) computes R from sheet
+  resistance and squares and C from area and fringe constants parsed out of the PDK — no field
+  solver, and the derived `c_row`/`c_col` carry no coupling term because `Crossbar` has nowhere
+  to put one. It separately *measures* rail-to-rail coupling and finds it the same order as
+  the shunt capacitance the model does have, so the C model is structurally incomplete. The
+  sweeps below still use *assumed* per-pitch values; LAYOUT.md §9 re-runs the int8 study on
+  derived ones and lands at 3.9 Ω/pitch, not the 1 Ω/pitch used as nominal here.
 - **No memristor device physics.** The cell is a linear resistor whose value is set by the
   weight. There is no nonlinearity, drift, read noise, cycle-to-cycle or device-to-device
   variation, and no write/programming dynamics.
@@ -189,6 +196,9 @@ limitations list are in [`docs/MATMUL.md`](docs/MATMUL.md).
 | `fp_matmul.py` | float64 `A @ B` on the array: encode/decode, block-FP tiling, the batched testbench |
 | `verify_matmul.py` | four machine checks for the float engine; exactness at zero parasitics is the gate |
 | `ngspice_compat.py` | ngspice ≥ 43 rawfile-header shim for vlsirtools 7.0.0; see below |
+| `layout_oracle.py` | sky130 tech-constant parser, GDS generation and measurement, R/C from geometry, the DRC harness, the LVS attempt |
+| `array_layout.py` | the N×N crossbar interconnect skeleton, derived per-pitch R and C, via/coupling analyses, the accuracy re-run |
+| `docs/LAYOUT.md` | the layout→parasitics chain: corner provenance, DRC and LVS status, derived parasitics, the `g_min` pitch loop, limitations |
 | `docs/DESIGN.md` | generator hierarchy, the differential-pair derivation, full parameter reference |
 | `docs/REPORT.md` | methodology, verification, results, limitations, reproduction |
 | `docs/MATMUL.md` | the int8 matmul: quantization, the accumulator-width argument, measured fidelity, cost; and the float engine underneath |

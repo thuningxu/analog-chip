@@ -221,6 +221,41 @@ capacitors are electrically present and behaving, not decorative.
 wire capacitance, the wire is not what limits read time — the readout amplifier's
 bandwidth is. Do not spend design effort on array RC before the TIA is settled.
 
+### 6.1 Correction: this capacitance model is structurally incomplete
+
+`Crossbar` stamps shunt capacitance to `vss` and nothing else. Geometry-derived
+capacitances from a DRC-clean sky130 interconnect skeleton (see
+[LAYOUT.md](LAYOUT.md)) show that is not the dominant-term-only simplification it
+might appear to be:
+
+| term | value | vs. the modelled shunt |
+| --- | --- | --- |
+| row shunt to substrate | 66.1 aF/pitch | modelled |
+| row to its two neighbours | 65.1 aF/pitch | 0.98x |
+| column shunt to substrate | 57.7 aF/pitch | modelled |
+| column to its two neighbours | 74.0 aF/pitch | 1.28x |
+| row-to-column crossing | 48.9 aF/cell | 0.74x, **no model term exists** |
+
+Two distinct problems, not one:
+
+1. **Rail-to-rail coupling is the same order as the shunt we do model.** Including it
+   would roughly double the effective capacitance and therefore roughly double every
+   `tau_63` in the table above. The *qualitative* conclusion survives that factor —
+   sub-picosecond stays sub-picosecond, and the readout amplifier still sets read time
+   — but the specific time constants above are low by about 2x, and the agreement with
+   the Elmore estimate is agreement between two models that share the same omission.
+2. **The row-to-column crossing capacitance has no counterpart in the model at all.**
+   It is a direct input-to-output feedthrough, which is a categorically different error
+   from a shunt load: it injects a fraction of the driven row voltage onto the column
+   before any conductance is involved. That is crosstalk on a transient read, and no
+   scaling of `c_row`/`c_col` represents it.
+
+**What this does *not* affect: every DC operating-point result in this report.** A
+`.op` solution has no capacitors in it, so §4 (IR drop), §5 (Ron compression), §7
+(signed Tile) and all of [MATMUL.md](MATMUL.md) are untouched. The scope of this
+correction is §6 — the settling numbers and, more seriously, an unmodelled crosstalk
+mechanism that would matter for any pulsed or time-multiplexed read scheme.
+
 ---
 
 ## 7. Signed Tile: differential column pairs
