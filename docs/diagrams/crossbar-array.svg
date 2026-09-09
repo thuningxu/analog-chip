@@ -1,0 +1,291 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="714" viewBox="0 0 1000 714">
+  <!-- Crossbar array with distributed wire parasitics.  Mirrors crossbar.py Crossbar():
+         row i:  inp[i] -rr_i_0- row[i][0] -rr_i_1- row[i][1] ...
+         col j:  col[j][0] -rc1_j- col[j][1] ... col[j][rows-1] -rc_rows_j- out[j]
+         cell:   row[i][j] to col[j][i]
+       Row lines hop over column lines: a hop means no connection; only the cell
+       bridges a row line to a column line. -->
+  <rect x="0" y="0" width="1000" height="714" fill="#ffffff"/>
+
+  <text x="28" y="36" font-family="sans-serif" font-size="17" font-weight="bold" fill="#1a1a1a">Crossbar array &#8212; distributed wire parasitics</text>
+  <text x="28" y="58" font-family="sans-serif" font-size="12.5" fill="#4a4a4a">A 3 x 3 window of the rows x cols array. One series R per cell pitch on every row and every column, so IR drop falls out of SPICE.</text>
+
+  <text x="28" y="106" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">row drivers Vdc(x[i]) attach at inp[i]:</text>
+  <text x="28" y="122" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">the column-0 (near) end of every row line.</text>
+
+  <text x="700" y="130" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">col[j][0], the top tap, has no wire above it:</text>
+  <text x="700" y="146" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">it is the far end of the column line.</text>
+  <text x="716" y="198" font-family="sans-serif" font-size="10.5" fill="#D55E00">Cell (0, cols-1), orange dashes at left,</text>
+  <text x="716" y="214" font-family="sans-serif" font-size="10.5" fill="#D55E00">is farthest from both ends: cols x r_row +</text>
+  <text x="716" y="230" font-family="sans-serif" font-size="10.5" fill="#D55E00">rows x r_col in series. IR-drop worst case.</text>
+
+  <text x="110" y="500" font-family="sans-serif" font-size="10.5" fill="#009E73">Cell (rows-1, 0), green dashes:</text>
+  <text x="110" y="516" font-family="sans-serif" font-size="10.5" fill="#009E73">1 x r_row + 1 x r_col in series.</text>
+
+  <!-- row 0 line, y=170: no column line reaches this high, so no hops -->
+  <path d="M 140,170 H 213" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="213" y="162" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 247,170 H 373" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="373" y="162" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 407,170 H 513" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="513" y="162" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 547,170 H 664" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="230" y="156" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="middle">rr0_0</text>
+  <text x="390" y="156" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="middle">rr0_1</text>
+  <text x="530" y="156" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="middle">rr0_2</text>
+
+  <!-- row 1 line, y=270, hopping over all three column lines -->
+  <path d="M 140,270 H 213" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="213" y="262" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 247,270 H 313" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 313,270 A 7,7 0 0 1 327,270" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 327,270 H 373" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="373" y="262" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 407,270 H 453" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 453,270 A 7,7 0 0 1 467,270" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 467,270 H 513" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="513" y="262" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 547,270 H 593" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 593,270 A 7,7 0 0 1 607,270" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 607,270 H 664" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- row 2 line, y=370 -->
+  <path d="M 140,370 H 213" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="213" y="362" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 247,370 H 313" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 313,370 A 7,7 0 0 1 327,370" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 327,370 H 373" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="373" y="362" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 407,370 H 453" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 453,370 A 7,7 0 0 1 467,370" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 467,370 H 513" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="513" y="362" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 547,370 H 593" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 593,370 A 7,7 0 0 1 607,370" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 607,370 H 664" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- column 0 line, x=320 -->
+  <path d="M 320,214 V 227" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="312" y="227" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 320,261 V 323" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="312" y="323" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 320,357 V 424" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="320" cy="430" r="2" fill="#1a1a1a"/>
+  <circle cx="320" cy="438" r="2" fill="#1a1a1a"/>
+  <circle cx="320" cy="446" r="2" fill="#1a1a1a"/>
+  <path d="M 320,452 V 463" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="312" y="463" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 320,497 V 560" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="306" y="248" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="end">rc1_0</text>
+  <text x="306" y="344" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="end">rc2_0</text>
+  <text x="306" y="484" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="end">rc3_0</text>
+
+  <!-- column 1 line, x=460 -->
+  <path d="M 460,214 V 227" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="452" y="227" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 460,261 V 323" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="452" y="323" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 460,357 V 424" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="460" cy="430" r="2" fill="#1a1a1a"/>
+  <circle cx="460" cy="438" r="2" fill="#1a1a1a"/>
+  <circle cx="460" cy="446" r="2" fill="#1a1a1a"/>
+  <path d="M 460,452 V 463" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="452" y="463" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 460,497 V 560" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- column 2 line, x=600 -->
+  <path d="M 600,214 V 227" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="592" y="227" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 600,261 V 323" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="592" y="323" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 600,357 V 424" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="600" cy="430" r="2" fill="#1a1a1a"/>
+  <circle cx="600" cy="438" r="2" fill="#1a1a1a"/>
+  <circle cx="600" cy="446" r="2" fill="#1a1a1a"/>
+  <path d="M 600,452 V 463" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="592" y="463" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 600,497 V 560" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- cell (0,0): row[0][0] down, memristor across to col[0][0] -->
+  <circle cx="276" cy="170" r="3.2" fill="#1a1a1a"/>
+  <path d="M 276,170 V 214" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 276,214 H 283" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 313,214 H 320" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="283" y="205" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 287,214 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="308" y="205" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="320" cy="214" r="3.2" fill="#1a1a1a"/>
+  <text x="298" y="198" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c0_0</text>
+
+  <!-- cell (0,1) -->
+  <circle cx="416" cy="170" r="3.2" fill="#1a1a1a"/>
+  <path d="M 416,170 V 214" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 416,214 H 423" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 453,214 H 460" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="423" y="205" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 427,214 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="448" y="205" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="460" cy="214" r="3.2" fill="#1a1a1a"/>
+  <text x="438" y="198" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c0_1</text>
+
+  <!-- cell (0,2): the IR-drop worst case -->
+  <circle cx="556" cy="170" r="3.2" fill="#1a1a1a"/>
+  <path d="M 556,170 V 214" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 556,214 H 563" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 593,214 H 600" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="563" y="205" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 567,214 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="588" y="205" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="600" cy="214" r="3.2" fill="#1a1a1a"/>
+  <text x="578" y="198" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c0_2</text>
+  <rect x="550" y="201" width="58" height="26" rx="4" fill="none" stroke="#D55E00" stroke-width="1.4" stroke-dasharray="4 3"/>
+
+  <!-- cell (1,0) -->
+  <circle cx="276" cy="270" r="3.2" fill="#1a1a1a"/>
+  <path d="M 276,270 V 314" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 276,314 H 283" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 313,314 H 320" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="283" y="305" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 287,314 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="308" y="305" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="320" cy="314" r="3.2" fill="#1a1a1a"/>
+  <text x="298" y="298" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c1_0</text>
+
+  <!-- cell (1,1) -->
+  <circle cx="416" cy="270" r="3.2" fill="#1a1a1a"/>
+  <path d="M 416,270 V 314" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 416,314 H 423" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 453,314 H 460" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="423" y="305" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 427,314 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="448" y="305" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="460" cy="314" r="3.2" fill="#1a1a1a"/>
+  <text x="438" y="298" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c1_1</text>
+
+  <!-- cell (1,2) -->
+  <circle cx="556" cy="270" r="3.2" fill="#1a1a1a"/>
+  <path d="M 556,270 V 314" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 556,314 H 563" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 593,314 H 600" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="563" y="305" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 567,314 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="588" y="305" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="600" cy="314" r="3.2" fill="#1a1a1a"/>
+  <text x="578" y="298" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c1_2</text>
+
+  <!-- cell (2,0): nearest to both the driver and the readout -->
+  <circle cx="276" cy="370" r="3.2" fill="#1a1a1a"/>
+  <path d="M 276,370 V 414" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 276,414 H 283" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 313,414 H 320" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="283" y="405" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 287,414 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="308" y="405" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="320" cy="414" r="3.2" fill="#1a1a1a"/>
+  <text x="298" y="398" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c2_0</text>
+  <rect x="270" y="401" width="58" height="26" rx="4" fill="none" stroke="#009E73" stroke-width="1.4" stroke-dasharray="4 3"/>
+
+  <!-- cell (2,1) -->
+  <circle cx="416" cy="370" r="3.2" fill="#1a1a1a"/>
+  <path d="M 416,370 V 414" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 416,414 H 423" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 453,414 H 460" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="423" y="405" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 427,414 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="448" y="405" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="460" cy="414" r="3.2" fill="#1a1a1a"/>
+  <text x="438" y="398" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c2_1</text>
+
+  <!-- cell (2,2) -->
+  <circle cx="556" cy="370" r="3.2" fill="#1a1a1a"/>
+  <path d="M 556,370 V 414" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 556,414 H 563" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 593,414 H 600" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="563" y="405" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 567,414 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="588" y="405" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="600" cy="414" r="3.2" fill="#1a1a1a"/>
+  <text x="578" y="398" font-family="monospace" font-size="9.5" fill="#D55E00" text-anchor="middle">c2_2</text>
+
+  <!-- one exemplar shunt C on a row tap: c_row, one per row tap when nonzero -->
+  <circle cx="350" cy="170" r="3.2" fill="#1a1a1a"/>
+  <path d="M 350,170 V 188" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 338,188 H 362" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <path d="M 338,194 H 362" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <path d="M 350,194 V 210" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 340,210 H 360" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 344,215 H 356" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 347,220 H 353" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <text x="366" y="190" font-family="monospace" font-size="9.5" fill="#0072B2">c_row</text>
+  <text x="350" y="236" font-family="monospace" font-size="9.5" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- one exemplar shunt C on a column tap: c_col, one per column tap when nonzero -->
+  <path d="M 600,395 H 656" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <circle cx="600" cy="395" r="3.2" fill="#1a1a1a"/>
+  <path d="M 656,395 V 412" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 644,412 H 668" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <path d="M 644,418 H 668" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <path d="M 656,418 V 434" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 646,434 H 666" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 650,439 H 662" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 653,444 H 659" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <text x="674" y="416" font-family="monospace" font-size="9.5" fill="#0072B2">c_col</text>
+  <text x="656" y="460" font-family="monospace" font-size="9.5" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- row drivers and the row-extension ellipsis -->
+  <circle cx="140" cy="170" r="3.4" fill="#1a1a1a"/>
+  <circle cx="140" cy="270" r="3.4" fill="#1a1a1a"/>
+  <circle cx="140" cy="370" r="3.4" fill="#1a1a1a"/>
+  <text x="132" y="174" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="end">inp[0]</text>
+  <text x="132" y="274" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="end">inp[1]</text>
+  <text x="132" y="374" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="end">inp[2]</text>
+  <circle cx="140" cy="400" r="2" fill="#1a1a1a"/>
+  <circle cx="140" cy="410" r="2" fill="#1a1a1a"/>
+  <circle cx="140" cy="420" r="2" fill="#1a1a1a"/>
+
+  <circle cx="678" cy="170" r="2.5" fill="#1a1a1a"/>
+  <circle cx="688" cy="170" r="2.5" fill="#1a1a1a"/>
+  <circle cx="698" cy="170" r="2.5" fill="#1a1a1a"/>
+  <circle cx="678" cy="270" r="2.5" fill="#1a1a1a"/>
+  <circle cx="688" cy="270" r="2.5" fill="#1a1a1a"/>
+  <circle cx="698" cy="270" r="2.5" fill="#1a1a1a"/>
+  <circle cx="678" cy="370" r="2.5" fill="#1a1a1a"/>
+  <circle cx="688" cy="370" r="2.5" fill="#1a1a1a"/>
+  <circle cx="698" cy="370" r="2.5" fill="#1a1a1a"/>
+
+  <!-- column readout taps -->
+  <circle cx="320" cy="560" r="3.4" fill="#1a1a1a"/>
+  <circle cx="460" cy="560" r="3.4" fill="#1a1a1a"/>
+  <circle cx="600" cy="560" r="3.4" fill="#1a1a1a"/>
+  <text x="320" y="582" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="middle">out[0]</text>
+  <text x="460" y="582" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="middle">out[1]</text>
+  <text x="600" y="582" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="middle">out[2]</text>
+  <circle cx="678" cy="560" r="2.5" fill="#1a1a1a"/>
+  <circle cx="688" cy="560" r="2.5" fill="#1a1a1a"/>
+  <circle cx="698" cy="560" r="2.5" fill="#1a1a1a"/>
+
+  <text x="28" y="606" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Readout attaches at out[j]: one 0 V sense source per column (an ideal TIA virtual ground), at the last-row (far) end.</text>
+
+  <!-- legend -->
+  <path d="M 28,638 H 38" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <rect x="38" y="630" width="26" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 64,638 H 74" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <text x="82" y="642" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">wire segment R: r_row per row pitch, r_col per column pitch</text>
+
+  <path d="M 400,638 H 408" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <rect x="408" y="629" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 412,638 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="433" y="629" width="5" height="18" fill="#1a1a1a"/>
+  <path d="M 438,638 H 446" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <text x="454" y="642" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">cell conductance g = g_min + w(g_max - g_min)</text>
+
+  <path d="M 700,638 H 712" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <path d="M 712,630 V 646" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <path d="M 718,630 V 646" stroke="#1a1a1a" stroke-width="2" fill="none"/>
+  <path d="M 718,638 H 730" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <text x="738" y="642" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">optional shunt C to vss (0 F default)</text>
+
+  <text x="28" y="668" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Instance names match crossbar.py: rr{i}_{j} row segments, rc{i}_{j} column segments, c{i}_{j} cells. A hop means no connection.</text>
+  <text x="28" y="684" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Nodes: row[i][j] is the row-line tap at column j, col[j][i] the column-line tap at row i; only the cell bridges the two.</text>
+  <text x="28" y="700" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Row-select (sel[i]) routing is omitted from this view; see cell-1t1r.svg. At c_row = c_col = 0 no capacitor is stamped at all.</text>
+</svg>

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="472" viewBox="0 0 720 472">
+  <!-- 1T1R cell.  Mirrors crossbar.py Cell(), default passive=False branch:
+       rmem from inp to mid, access NMOS macc(d=mid, g=sel, s=out, b=vss). -->
+  <rect x="0" y="0" width="720" height="472" fill="#ffffff"/>
+
+  <text x="28" y="36" font-family="sans-serif" font-size="17" font-weight="bold" fill="#1a1a1a">1T1R cell &#8212; default CellParams()</text>
+  <text x="28" y="58" font-family="sans-serif" font-size="12.5" fill="#4a4a4a">memristor in series with an access NMOS; the row select gates the cell on</text>
+
+  <!-- row line and memristor -->
+  <text x="76" y="84" font-family="sans-serif" font-size="11" fill="#4a4a4a" text-anchor="middle">row line</text>
+  <text x="76" y="104" font-family="monospace" font-size="13" fill="#0072B2" text-anchor="middle">inp</text>
+  <circle cx="76" cy="118" r="3.4" fill="#1a1a1a"/>
+  <path d="M 76,118 H 160" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <path d="M 160,118 H 176" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 224,118 H 240" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="176" y="107" width="48" height="22" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <path d="M 182,118 v -6 h 8 v 12 h 8 v -12 h 8 v 6" stroke="#1a1a1a" stroke-width="1.6" fill="none"/>
+  <rect x="217" y="107" width="7" height="22" fill="#1a1a1a"/>
+  <text x="200" y="152" font-family="monospace" font-size="12.5" fill="#D55E00" text-anchor="middle">rmem</text>
+  <text x="200" y="170" font-family="monospace" font-size="11.5" fill="#4a4a4a" text-anchor="middle">r = 1 / g</text>
+
+  <!-- mid node, then down to the drain -->
+  <path d="M 240,118 H 400" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="400" cy="118" r="3.4" fill="#1a1a1a"/>
+  <text x="400" y="84" font-family="sans-serif" font-size="10.5" fill="#4a4a4a" text-anchor="middle">internal node</text>
+  <text x="400" y="102" font-family="monospace" font-size="12.5" fill="#0072B2" text-anchor="middle">mid</text>
+  <path d="M 400,118 V 192" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- what the series access device does electrically -->
+  <text x="480" y="140" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Ron of macc is in series with rmem, so</text>
+  <text x="480" y="156" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">the effective cell conductance is</text>
+  <text x="480" y="176" font-family="monospace" font-size="11.5" fill="#1a1a1a">G_eff = 1 / (1/g + Ron)</text>
+  <text x="480" y="196" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">which compresses high weights hardest;</text>
+  <text x="480" y="212" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">see figures/ron-compression.png.</text>
+
+  <!-- access NMOS: gate plate, broken channel, d / s / b leads -->
+  <path d="M 280,212 H 366" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 366,192 V 232" stroke="#1a1a1a" stroke-width="2.4" fill="none"/>
+  <path d="M 377,192 V 200" stroke="#1a1a1a" stroke-width="2.4" fill="none"/>
+  <path d="M 377,206 V 218" stroke="#1a1a1a" stroke-width="2.4" fill="none"/>
+  <path d="M 377,224 V 232" stroke="#1a1a1a" stroke-width="2.4" fill="none"/>
+  <path d="M 377,192 H 400" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 377,232 H 400" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 377,212 H 452" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <polygon points="377,212 389,206 389,218" fill="#1a1a1a"/>
+
+  <text x="394" y="184" font-family="monospace" font-size="11" fill="#4a4a4a" text-anchor="end">d</text>
+  <text x="360" y="206" font-family="monospace" font-size="11" fill="#4a4a4a" text-anchor="end">g</text>
+  <text x="394" y="250" font-family="monospace" font-size="11" fill="#4a4a4a" text-anchor="end">s</text>
+  <text x="424" y="204" font-family="monospace" font-size="11" fill="#4a4a4a">b</text>
+  <text x="360" y="256" font-family="monospace" font-size="12.5" fill="#D55E00" text-anchor="end">macc</text>
+
+  <!-- row select -->
+  <text x="280" y="190" font-family="sans-serif" font-size="10.5" fill="#4a4a4a" text-anchor="middle">row select</text>
+  <circle cx="280" cy="212" r="3.4" fill="#1a1a1a"/>
+  <text x="272" y="216" font-family="monospace" font-size="12.5" fill="#0072B2" text-anchor="end">sel</text>
+  <text x="280" y="234" font-family="sans-serif" font-size="10.5" fill="#4a4a4a" text-anchor="middle">1.8 V = on</text>
+
+  <!-- bulk to vss ground -->
+  <path d="M 452,212 V 262" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 442,262 H 462" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 446,268 H 458" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 449.5,274 H 454.5" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="452" y="292" font-family="monospace" font-size="11.5" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- source out to the column line -->
+  <path d="M 400,230 V 320" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 400,320 H 600" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="600" cy="320" r="3.4" fill="#1a1a1a"/>
+  <text x="600" y="286" font-family="sans-serif" font-size="11" fill="#4a4a4a" text-anchor="middle">column line</text>
+  <text x="600" y="306" font-family="monospace" font-size="13" fill="#0072B2" text-anchor="middle">out</text>
+  <polygon points="524,320 513,314.5 513,325.5" fill="#1a1a1a"/>
+  <text x="518" y="308" font-family="monospace" font-size="11" fill="#1a1a1a" text-anchor="middle">I_cell</text>
+
+  <!-- the two access-device routes -->
+  <rect x="28" y="352" width="664" height="72" fill="#f7f7f7" stroke="#cccccc" stroke-width="1"/>
+  <text x="42" y="372" font-family="sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">access device routes &#8212; CellParams.access</text>
+  <text x="42" y="394" font-family="monospace" font-size="11" fill="#0072B2">access="generic"</text>
+  <text x="190" y="394" font-family="monospace" font-size="10.5" fill="#1a1a1a">.model xbar_nmos_generic nmos level=1</text>
+  <text x="452" y="394" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">placeholder, no PDK needed</text>
+  <text x="42" y="414" font-family="monospace" font-size="11" fill="#0072B2">access="sky130"</text>
+  <text x="190" y="414" font-family="monospace" font-size="10.5" fill="#1a1a1a">sky130_fd_pr__nfet_01v8</text>
+  <text x="452" y="414" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">real PDK models, via sky130_hdl21.compile()</text>
+
+  <text x="28" y="446" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">w_acc = 1 um and l_acc = 180 nm are SI metres on both routes. si_literal() converts Prefixed to Literal so</text>
+  <text x="28" y="462" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">sky130-hdl21's micron scaling fires; the sky130 ngspice library sets .option scale=1.0u.</text>
+</svg>

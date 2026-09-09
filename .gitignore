@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+wheels/
+
+# uv / virtualenv
+.venv/
+
+# Claude Code machine-local settings (permissions, not project config)
+.claude/
+
+# ngspice scratch: decks and binary rawfiles, in case a rundir is pointed here
+# (crossbar.py and verify_mna.py write to /tmp by default)
+*.raw
+netlist.sp
+rundir/
+rundirs/
+
+# macOS
+.DS_Store

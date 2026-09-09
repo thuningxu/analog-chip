@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="560" viewBox="0 0 940 560">
+  <!-- MAC testbench.  Mirrors crossbar.py mac_sim(): one Vdc(x[i]) per row, one
+       Vdc(1.8) per row select, one Vdc(0.0) per column as an ideal TIA virtual
+       ground, and an .op solve.  Every ground symbol is the same vss net. -->
+  <rect x="0" y="0" width="940" height="560" fill="#ffffff"/>
+
+  <text x="28" y="36" font-family="sans-serif" font-size="17" font-weight="bold" fill="#1a1a1a">MAC testbench &#8212; mac_sim()</text>
+  <text x="28" y="58" font-family="sans-serif" font-size="12.5" fill="#4a4a4a">Apply an input vector, hold every column at virtual ground with a 0 V sense source, read the summed column currents.</text>
+
+  <!-- row-select drive rail -->
+  <text x="500" y="80" font-family="sans-serif" font-size="10.5" fill="#4a4a4a" text-anchor="middle">vsel{i} = Vdc(1.8), one per row select</text>
+  <path d="M 300,92 H 560" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="440" cy="92" r="3.2" fill="#1a1a1a"/>
+  <circle cx="500" cy="92" r="3.2" fill="#1a1a1a"/>
+  <path d="M 300,92 V 112" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 290,112 H 310" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 294,117 H 306" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 297,122 H 303" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="300" y="140" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- three row-select sources: minus on top to the rail, plus down into sel[i] -->
+  <path d="M 440,92 V 110" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="440" cy="125" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="440" y="123" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <text x="440" y="138" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <path d="M 440,140 V 170" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <path d="M 500,92 V 110" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="500" cy="125" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="500" y="123" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <text x="500" y="138" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <path d="M 500,140 V 170" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <path d="M 560,92 V 110" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="560" cy="125" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="560" y="123" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <text x="560" y="138" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <path d="M 560,140 V 170" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- device under test -->
+  <rect x="400" y="170" width="200" height="250" fill="#f7f7f7" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="500" y="190" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="middle">sel[i]</text>
+  <text x="500" y="232" font-family="sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a" text-anchor="middle">tb.dut</text>
+  <text x="500" y="250" font-family="monospace" font-size="10.5" fill="#4a4a4a" text-anchor="middle">Crossbar generator</text>
+  <text x="410" y="204" font-family="monospace" font-size="10" fill="#0072B2">inp[0]</text>
+  <text x="410" y="274" font-family="monospace" font-size="10" fill="#0072B2">inp[1]</text>
+  <text x="410" y="344" font-family="monospace" font-size="10" fill="#0072B2">inp[2]</text>
+  <text x="590" y="214" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="end">out[0]</text>
+  <text x="590" y="284" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="end">out[1]</text>
+  <text x="590" y="354" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="end">out[2]</text>
+  <text x="500" y="408" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- dut vss to ground -->
+  <path d="M 500,420 V 450" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 490,450 H 510" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 494,455 H 506" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 497,460 H 503" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="500" y="478" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- row-driver ground rail -->
+  <path d="M 180,200 V 380" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="180" cy="270" r="3.2" fill="#1a1a1a"/>
+  <circle cx="180" cy="340" r="3.2" fill="#1a1a1a"/>
+  <path d="M 170,380 H 190" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 174,385 H 186" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 177,390 H 183" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="180" y="408" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <!-- row driver 0 -->
+  <path d="M 180,200 H 215" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="230" cy="200" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="221" y="204" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <text x="239" y="204" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <path d="M 245,200 H 400" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="230" y="176" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">vin0 = x[0] V</text>
+
+  <!-- row driver 1 -->
+  <path d="M 180,270 H 215" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="230" cy="270" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="221" y="274" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <text x="239" y="274" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <path d="M 245,270 H 400" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="230" y="246" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">vin1 = x[1] V</text>
+
+  <!-- row driver 2 -->
+  <path d="M 180,340 H 215" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="230" cy="340" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="221" y="344" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <text x="239" y="344" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <path d="M 245,340 H 400" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="230" y="316" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">vin2 = x[2] V</text>
+
+  <circle cx="230" cy="372" r="2" fill="#1a1a1a"/>
+  <circle cx="230" cy="382" r="2" fill="#1a1a1a"/>
+  <circle cx="230" cy="392" r="2" fill="#1a1a1a"/>
+
+  <!-- column sense source 0 -->
+  <path d="M 600,210 H 655" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <polygon points="638,210 628,205 628,215" fill="#1a1a1a"/>
+  <text x="632" y="198" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">i</text>
+  <circle cx="670" cy="210" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="661" y="214" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <text x="679" y="214" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <path d="M 685,210 H 740" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="670" y="238" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">vsense0 = 0 V</text>
+
+  <!-- column sense source 1 -->
+  <path d="M 600,280 H 655" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <polygon points="638,280 628,275 628,285" fill="#1a1a1a"/>
+  <text x="632" y="268" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">i</text>
+  <circle cx="670" cy="280" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="661" y="284" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <text x="679" y="284" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <path d="M 685,280 H 740" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="670" y="308" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">vsense1 = 0 V</text>
+
+  <!-- column sense source 2 -->
+  <path d="M 600,350 H 655" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <polygon points="638,350 628,345 628,355" fill="#1a1a1a"/>
+  <text x="632" y="338" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">i</text>
+  <circle cx="670" cy="350" r="15" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.8"/>
+  <text x="661" y="354" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">+</text>
+  <text x="679" y="354" font-family="sans-serif" font-size="11" fill="#1a1a1a" text-anchor="middle">&#8722;</text>
+  <path d="M 685,350 H 740" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="670" y="378" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle">vsense2 = 0 V</text>
+
+  <!-- sense-source ground rail -->
+  <path d="M 740,210 V 390" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <circle cx="740" cy="280" r="3.2" fill="#1a1a1a"/>
+  <circle cx="740" cy="350" r="3.2" fill="#1a1a1a"/>
+  <path d="M 730,390 H 750" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 734,395 H 746" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 737,400 H 743" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="740" y="418" font-family="monospace" font-size="10" fill="#0072B2" text-anchor="middle">vss</text>
+
+  <circle cx="670" cy="396" r="2" fill="#1a1a1a"/>
+  <circle cx="670" cy="406" r="2" fill="#1a1a1a"/>
+  <circle cx="670" cy="416" r="2" fill="#1a1a1a"/>
+
+  <text x="790" y="214" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Each sense source</text>
+  <text x="790" y="230" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">forces its column to</text>
+  <text x="790" y="246" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">exactly 0 V, so it is</text>
+  <text x="790" y="262" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">an ideal TIA virtual</text>
+  <text x="790" y="278" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">ground. Its branch</text>
+  <text x="790" y="294" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">current is the MAC</text>
+  <text x="790" y="310" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">output for that column.</text>
+
+  <text x="28" y="508" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">The saved signals are i(v.xtop.vvsense{j}), the branch current through each column sense source, marked i above. run_mac() compares them</text>
+  <text x="28" y="524" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">against the zero-parasitic reference ideal_0t1r(p, x) = G.T @ x, then error_metrics() splits the difference into a best-fit gain and a residual.</text>
+  <text x="28" y="540" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Instance names match mac_sim(): vin{i} row drivers, vsel{i} row selects, vsense{j} column sense sources. Every ground symbol is the same vss net.</text>
+</svg>

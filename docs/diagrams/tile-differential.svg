@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="648" viewBox="0 0 900 648">
+  <!-- Tile: signed weights on a unipolar array.  Mirrors crossbar.py Tile(), signed=True:
+       each signed weight w becomes the adjacent physical column pair (2j, 2j+1),
+       carrying G+ and G-; the readout subtracts the two column currents. -->
+  <rect x="0" y="0" width="900" height="648" fill="#ffffff"/>
+
+  <text x="28" y="36" font-family="sans-serif" font-size="17" font-weight="bold" fill="#1a1a1a">Tile &#8212; signed weights on a unipolar array</text>
+  <text x="28" y="58" font-family="sans-serif" font-size="12.5" fill="#4a4a4a">Every signed weight becomes one adjacent physical column pair. The difference of the two column currents is the signed MAC.</text>
+
+  <text x="110" y="112" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">inp[i] driven to x[i] volts, sel[i] to 1.8 V</text>
+  <text x="110" y="128" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">(row-select routing omitted; see cell-1t1r.svg)</text>
+
+  <!-- bracket marking the two columns as one adjacent pair -->
+  <path d="M 380,144 V 136 H 500 V 144" stroke="#4a4a4a" stroke-width="1.2" fill="none"/>
+  <text x="440" y="130" font-family="sans-serif" font-size="10" fill="#4a4a4a" text-anchor="middle">one weight = one adjacent pair</text>
+
+  <text x="700" y="196" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">Adjacent physical columns:</text>
+  <text x="700" y="212" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">both legs see nearly the same</text>
+  <text x="700" y="228" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">wire parasitics, so IR droop is</text>
+  <text x="700" y="244" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">common-mode to first order.</text>
+
+  <!-- row 0 line, y=170: no column line reaches this high, so no hops -->
+  <path d="M 110,170 H 183" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="183" y="162" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 217,170 H 403" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="403" y="162" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 437,170 H 640" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <text x="200" y="156" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="middle">r_row</text>
+  <text x="420" y="156" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="middle">r_row</text>
+
+  <!-- row 1 line, y=270, hopping over both column lines -->
+  <path d="M 110,270 H 183" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="183" y="262" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 217,270 H 373" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 373,270 A 7,7 0 0 1 387,270" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 387,270 H 403" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="403" y="262" width="34" height="16" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 437,270 H 493" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 493,270 A 7,7 0 0 1 507,270" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 507,270 H 640" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+
+  <!-- G+ column line, physical column 2j, x=380 -->
+  <path d="M 380,210 V 223" stroke="#0072B2" stroke-width="1.8" fill="none"/>
+  <rect x="372" y="223" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 380,257 V 310" stroke="#0072B2" stroke-width="1.8" fill="none"/>
+  <path d="M 380,310 V 326" stroke="#0072B2" stroke-width="1.8" fill="none"/>
+  <circle cx="380" cy="332" r="2" fill="#0072B2"/>
+  <circle cx="380" cy="340" r="2" fill="#0072B2"/>
+  <circle cx="380" cy="348" r="2" fill="#0072B2"/>
+  <path d="M 380,354 V 366" stroke="#0072B2" stroke-width="1.8" fill="none"/>
+  <rect x="372" y="366" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 380,400 V 460" stroke="#0072B2" stroke-width="1.8" fill="none"/>
+  <text x="366" y="244" font-family="monospace" font-size="9.5" fill="#4a4a4a" text-anchor="end">r_col</text>
+
+  <!-- G- column line, physical column 2j+1, x=500 -->
+  <path d="M 500,210 V 223" stroke="#D55E00" stroke-width="1.8" fill="none"/>
+  <rect x="492" y="223" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 500,257 V 310" stroke="#D55E00" stroke-width="1.8" fill="none"/>
+  <path d="M 500,310 V 326" stroke="#D55E00" stroke-width="1.8" fill="none"/>
+  <circle cx="500" cy="332" r="2" fill="#D55E00"/>
+  <circle cx="500" cy="340" r="2" fill="#D55E00"/>
+  <circle cx="500" cy="348" r="2" fill="#D55E00"/>
+  <path d="M 500,354 V 366" stroke="#D55E00" stroke-width="1.8" fill="none"/>
+  <rect x="492" y="366" width="16" height="34" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 500,400 V 460" stroke="#D55E00" stroke-width="1.8" fill="none"/>
+
+  <!-- row 0, G+ cell -->
+  <circle cx="340" cy="170" r="3.2" fill="#1a1a1a"/>
+  <path d="M 340,170 V 210" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 340,210 H 345" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 375,210 H 380" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="345" y="201" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 349,210 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="370" y="201" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="380" cy="210" r="3.2" fill="#0072B2"/>
+  <text x="360" y="196" font-family="monospace" font-size="10.5" fill="#0072B2" text-anchor="middle">G+</text>
+
+  <!-- row 0, G- cell -->
+  <circle cx="460" cy="170" r="3.2" fill="#1a1a1a"/>
+  <path d="M 460,170 V 210" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 460,210 H 465" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 495,210 H 500" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="465" y="201" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 469,210 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="490" y="201" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="500" cy="210" r="3.2" fill="#D55E00"/>
+  <text x="480" y="196" font-family="monospace" font-size="10.5" fill="#D55E00" text-anchor="middle">G-</text>
+
+  <!-- row 1, G+ cell -->
+  <circle cx="340" cy="270" r="3.2" fill="#1a1a1a"/>
+  <path d="M 340,270 V 310" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 340,310 H 345" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 375,310 H 380" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="345" y="301" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 349,310 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="370" y="301" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="380" cy="310" r="3.2" fill="#0072B2"/>
+  <text x="360" y="296" font-family="monospace" font-size="10.5" fill="#0072B2" text-anchor="middle">G+</text>
+
+  <!-- row 1, G- cell -->
+  <circle cx="460" cy="270" r="3.2" fill="#1a1a1a"/>
+  <path d="M 460,270 V 310" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 460,310 H 465" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <path d="M 495,310 H 500" stroke="#1a1a1a" stroke-width="1.8" fill="none"/>
+  <rect x="465" y="301" width="30" height="18" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.6"/>
+  <path d="M 469,310 v -5 h 5 v 10 h 5 v -10 h 5 v 5" stroke="#1a1a1a" stroke-width="1.4" fill="none"/>
+  <rect x="490" y="301" width="5" height="18" fill="#1a1a1a"/>
+  <circle cx="500" cy="310" r="3.2" fill="#D55E00"/>
+  <text x="480" y="296" font-family="monospace" font-size="10.5" fill="#D55E00" text-anchor="middle">G-</text>
+
+  <!-- row drivers and extension ellipses -->
+  <circle cx="110" cy="170" r="3.4" fill="#1a1a1a"/>
+  <circle cx="110" cy="270" r="3.4" fill="#1a1a1a"/>
+  <text x="102" y="174" font-family="monospace" font-size="11" fill="#1a1a1a" text-anchor="end">inp[0]</text>
+  <text x="102" y="274" font-family="monospace" font-size="11" fill="#1a1a1a" text-anchor="end">inp[1]</text>
+  <circle cx="110" cy="300" r="2" fill="#1a1a1a"/>
+  <circle cx="110" cy="310" r="2" fill="#1a1a1a"/>
+  <circle cx="110" cy="320" r="2" fill="#1a1a1a"/>
+  <circle cx="662" cy="170" r="2.5" fill="#1a1a1a"/>
+  <circle cx="672" cy="170" r="2.5" fill="#1a1a1a"/>
+  <circle cx="682" cy="170" r="2.5" fill="#1a1a1a"/>
+  <circle cx="662" cy="270" r="2.5" fill="#1a1a1a"/>
+  <circle cx="672" cy="270" r="2.5" fill="#1a1a1a"/>
+  <circle cx="682" cy="270" r="2.5" fill="#1a1a1a"/>
+
+  <!-- sign mapping -->
+  <text x="570" y="348" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">sign mapping, dg = g_max - g_min</text>
+  <text x="570" y="370" font-family="monospace" font-size="10.5" fill="#1a1a1a">w &gt; 0:  G+ = g_min + w*dg,  G- = g_min</text>
+  <text x="570" y="388" font-family="monospace" font-size="10.5" fill="#1a1a1a">w &lt; 0:  G+ = g_min,  G- = g_min - w*dg</text>
+  <text x="570" y="406" font-family="monospace" font-size="10.5" fill="#1a1a1a">w = 0:  G+ = G- = g_min, zero difference</text>
+
+  <!-- column readout taps -->
+  <polygon points="380,444 374.5,433 385.5,433" fill="#0072B2"/>
+  <text x="392" y="440" font-family="monospace" font-size="10.5" fill="#0072B2">I(outp[j])</text>
+  <polygon points="500,444 494.5,433 505.5,433" fill="#D55E00"/>
+  <text x="512" y="440" font-family="monospace" font-size="10.5" fill="#D55E00">I(outn[j])</text>
+  <circle cx="380" cy="460" r="3.4" fill="#0072B2"/>
+  <circle cx="500" cy="460" r="3.4" fill="#D55E00"/>
+  <text x="380" y="482" font-family="monospace" font-size="11" fill="#0072B2" text-anchor="middle">outp[j]</text>
+  <text x="500" y="482" font-family="monospace" font-size="11" fill="#D55E00" text-anchor="middle">outn[j]</text>
+  <text x="380" y="498" font-family="sans-serif" font-size="10" fill="#4a4a4a" text-anchor="middle">physical column 2j</text>
+  <text x="500" y="498" font-family="sans-serif" font-size="10" fill="#4a4a4a" text-anchor="middle">physical column 2j+1</text>
+
+  <!-- the differential result -->
+  <rect x="28" y="512" width="844" height="88" fill="#f7f7f7" stroke="#cccccc" stroke-width="1"/>
+  <text x="42" y="534" font-family="monospace" font-size="11" fill="#0072B2">G+ = g_min + max(+w, 0) * (g_max - g_min)</text>
+  <text x="42" y="552" font-family="monospace" font-size="11" fill="#D55E00">G- = g_min + max(-w, 0) * (g_max - g_min)</text>
+  <text x="42" y="578" font-family="monospace" font-size="12" fill="#1a1a1a">I(outp[j]) - I(outn[j]) = (g_max - g_min) * sum_i x_i * w[i][j]</text>
+  <text x="42" y="594" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">g_min appears in both legs and cancels exactly in the difference. That is the point of the scheme.</text>
+
+  <text x="28" y="620" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">The subtraction happens in the readout path: run_tile_mac() differences the two measured currents; there is no subtractor generator here.</text>
+  <text x="28" y="636" font-family="sans-serif" font-size="10.5" fill="#4a4a4a">TileParams(signed=False) skips the split and exposes out[cols] directly; verify_mna.py's signed-tile check pins the recovery at zero wire R.</text>
+</svg>
