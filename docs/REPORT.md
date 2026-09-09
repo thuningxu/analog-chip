@@ -197,6 +197,31 @@ levers: widen the access FET (W = 2 µm roughly halves Ron to 365 Ω) or lower `
 Lowering `g_max` also shrinks signal current, so it trades compression against SNR
 and readout integration time.
 
+### 5.4 Contact and via resistance adds to Ron, and is not modelled
+
+Geometry-derived tap resistances from the interconnect skeleton
+([LAYOUT.md](LAYOUT.md)), typical corner: `via` (m1→m2) 4.5 Ω, `mcon` (m1→li1) 9.3 Ω,
+`nsc` (li1→diffusion) 185 Ω.
+
+The right comparison is **not** against the rail resistance per pitch. A tap sits in
+series with a single cell and is shared with no other cell, so it produces none of the
+shared-segment loading that causes the IR-drop gradient. Its entire effect is the same
+weight-dependent compression `ideal_1t1r` already describes, with a larger effective
+`ron`. So the denominator is the cell impedance — 10 kΩ at `g_max` — not the 0.289 Ω
+rail:
+
+| route | series tap R | `g_max` compression |
+| --- | --- | --- |
+| 0T1R as drawn (one via) | 4.5 Ω | 0% → 0.045% — no access FET, so the tap is the only series R |
+| 1T1R (via + mcon + li1-to-diffusion) | 198.8 Ω | 7.569% → **9.237%** (+1.67 pt) |
+
+**For 0T1R this is negligible. For 1T1R it is not.** 198.8 Ω is a 24% increase on the
+819 Ω in-array Ron of §5.1, and it moves `g_max` compression by 1.67 points — the same
+order as effects this report treats as significant. It is absent from `Crossbar` and
+from the `ideal_1t1r` reference alike, so the 1T1R numbers in §5.2 and in
+[MATMUL.md](MATMUL.md) understate the access-path series resistance by roughly a
+quarter. The mechanism is already characterized; only the magnitude shifts.
+
 ---
 
 ## 6. Wire RC settling
@@ -238,12 +263,22 @@ might appear to be:
 
 Two distinct problems, not one:
 
-1. **Rail-to-rail coupling is the same order as the shunt we do model.** Including it
-   would roughly double the effective capacitance and therefore roughly double every
-   `tau_63` in the table above. The *qualitative* conclusion survives that factor —
-   sub-picosecond stays sub-picosecond, and the readout amplifier still sets read time
-   — but the specific time constants above are low by about 2x, and the agreement with
-   the Elmore estimate is agreement between two models that share the same omission.
+1. **Rail-to-rail coupling is the same order as the modelled shunt at tight pitch** —
+   direction certain, magnitude poorly bounded. Read that column as an upper bound, not
+   a measurement. The numbers come from the tech file's `defaultsidewall` constant
+   alone, but magic carries a second field on that line
+   (`defaultsidewall allm2 metal2 50 0.3`) and a global `sidehalo 8`
+   (`sky130A.tech:5027`) that scopes coupling by separation, and the implementation here
+   uses neither. That is why the ratio barely moves — 0.98x to 0.82x — across a 70x
+   change in rail spacing, which is not physical. Under an explicit 1/s falloff
+   referenced to minimum spacing, the row-to-neighbour ratio instead lands near 0.33x at
+   the dense pitch and ~0.004x at 30 um. So the settling numbers above are low by a
+   factor between roughly 1 and 2 at tight pitch, and **this work cannot bound the factor
+   at wide pitch at all.** The qualitative conclusion survives either way:
+   sub-picosecond stays sub-picosecond, and the readout amplifier still sets read time.
+   Note also that the agreement with the Elmore estimate in the table is agreement
+   between two models sharing the same omission — it is not independent corroboration of
+   the capacitance.
 2. **The row-to-column crossing capacitance has no counterpart in the model at all.**
    It is a direct input-to-output feedthrough, which is a categorically different error
    from a shunt load: it injects a fraction of the driven row voltage onto the column

@@ -359,47 +359,65 @@ the compression column is the one that matters.
 ### Rail-to-rail coupling: the C model is structurally incomplete
 
 `crossbar.Crossbar` has shunt C to `vss` and nothing else. Three coupling terms exist in the
-tech file and none of them has a counterpart in the model. For the `dense` skeleton:
+tech file and none has a counterpart in the model. At all three pitches, aF per cell pitch (per
+crossing for the row↔col term):
 
-| term | value | vs. the modelled shunt |
-| --- | --- | --- |
-| row shunt to substrate (modelled) | 66.1 aF/pitch | — |
-| row to its two metal1 neighbours | 65.1 aF/pitch | **0.98×**, at 0.42 µm spacing |
-| column shunt to substrate (modelled) | 57.7 aF/pitch | — |
-| column to its two metal2 neighbours | 74.0 aF/pitch | **1.28×**, at 0.60 µm spacing |
-| row-to-column at each crossing | 48.9 aF/cell (6.0 plate + 42.9 edge fringe) | **0.74×**, no counterpart at all |
+| skeleton | rail spacing | row → sub (modelled) | row ↔ 2 nbrs | ratio | col → sub (modelled) | col ↔ 2 nbrs | ratio | row ↔ col | ratio |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| dense (0.74 µm) | 0.42 µm | 66.1 | 65.1 | **0.98×** | 57.7 | 74.0 | **1.28×** | 48.9 | **0.74×** |
+| relaxed (2 µm) | 1.50 µm | 188.1 | 176.0 | 0.94× | 168.5 | 200.0 | 1.19× | 100.5 | 0.53× |
+| g_min-driven (31 µm) | 30.0 µm | 3314.5 | 2728.0 | 0.82× | 2883.6 | 3100.0 | 1.08× | 268.0 | 0.08× |
 
-**Verdict: the capacitance model is structurally incomplete, not merely imprecise.** Coupling
-to the neighbouring rails is the same order as the shunt capacitance the model has, so
-`c_row`/`c_col` set from geometry still understate the total node capacitance by roughly a
-factor of two.
+**The two rail↔neighbour columns are upper bounds, and loose ones at the wide pitches.** The
+tech file gives **one** sidewall constant per layer with **no stated reference spacing**, and
+magic scales coupling with separation inside a `sidehalo` (`sky130A.tech:5027`); this model does
+not scale it at all. So those ratios come out nearly spacing-independent by construction, which
+is plainly wrong — two rails 30 µm apart do not couple as strongly per micron of length as two
+rails 0.42 µm apart. As a sensitivity: *if* the constant is quoted at minimum metal1 spacing
+(0.14 µm) and falls as 1/spacing — two assumptions, neither verified, since magic's actual
+functional form could not be established without magic installed — the row↔neighbour ratio
+becomes ≈0.33× at the dense pitch and ≈0.004× at the g_min-driven pitch. **What survives every
+version of that assumption: coupling is comparable to the modelled shunt at tight pitches, and
+this work cannot say what it is at 30 µm spacing.**
 
-And the row-to-column term is a different kind of error entirely: it is a direct feedthrough
-from a **driven row line to a sensed column line**, i.e. crosstalk, not a shunt load. A shunt
-slows settling; a feedthrough injects a wrong charge into the readout. Two components:
-`defaultoverlap allm2 metal2 allm1 metal1` = 133.86 aF/µm² over the `w_row · w_col` plate, and
-`defaultsideoverlap allm2 metal2 allm1 metal1` = 67.05 aF/µm over the column rail's two edges
-crossing the row rail. **The edge fringe is 7× the plate term** at these widths, which is the
-same lesson as §7's fringe-dominates-area finding. The `2 · w_row` edge length is this
-module's own accounting rather than magic's, so treat that term as an estimate with the
-geometry stated, not a parsed constant.
+Two further caveats on the same numbers:
 
-None of this touches the DC MAC accuracy the study measures, because a `.op` solve has no
-capacitors in it. It matters for transient reads, and it means any future settling or
-crosstalk study on this array cannot use `c_row`/`c_col` alone.
-
-**Two honest caveats on the sidewall numbers.**
-
-- The tech file gives **one** sidewall constant per layer and **no reference spacing**. magic
-  scales coupling with separation inside a `sidehalo` (`sky130A.tech:5027`) and this model does
-  not. Taking the constant at the drawn spacing is a *model choice*; it is the conservative
-  one, and it becomes more conservative — i.e. more of an overestimate — as the pitch opens
-  up. The ratios above are therefore upper bounds at the relaxed pitches.
 - Adding the **full** perimeter-fringe term and the **full** sidewall term double-counts the
-  same physical edge. A close neighbour shields the fringe field that would otherwise reach
-  the substrate; magic has `fringeshieldhalo` (`sky130A.tech:5028`) for exactly this and this
-  model does not. So the absolute totals are upper bounds too, and the **ratio** is the robust
-  part of the finding: coupling and shunt are the same order, whatever the exact shielding.
+  same physical edge. A close neighbour shields the fringe field that would otherwise reach the
+  substrate; magic has `fringeshieldhalo` (`sky130A.tech:5028`) for exactly this and this model
+  does not. So the absolute totals are upper bounds too.
+- The row↔col **edge-fringe** component assumes the column rail presents `2 · w_row` of edge per
+  crossing. That geometry is this module's accounting, not a parsed constant.
+
+#### The part of the verdict that depends on none of that
+
+The **row-to-column crossing capacitance is a different kind of defect, and it is
+spacing-independent.** Its plate component is `defaultoverlap allm2 metal2 allm1 metal1` =
+133.86 aF/µm² over a drawn `w_row · w_col` overlap — no separation assumption enters, because it
+is two shapes on adjacent metal layers with a fixed dielectric between them. At the dense pitch
+that plate term alone is 6.0 aF per crossing; with the edge-fringe estimate added, 48.9 aF
+(the fringe is 7× the plate at these widths, the same lesson as the fringe-dominates-area
+finding above).
+
+It is a direct feedthrough from a **driven row line to a sensed column line** — crosstalk, not
+a shunt load. A shunt slows settling; a feedthrough injects charge from the input straight into
+the readout before any conductance is involved. **No value of `c_row` or `c_col` can represent
+it, because the topology is different**: `Crossbar` has no element between a row node and a
+column node other than the cell.
+
+**Verdict: the capacitance model is structurally incomplete, not merely imprecise.** Two
+separable problems, at different confidence levels:
+
+1. *Direction certain, magnitude uncertain at wide pitch:* rail-to-rail coupling is comparable
+   to the modelled shunt at tight pitches, so `c_row`/`c_col` understate total node capacitance
+   — by up to ~2× at the dense pitch, by an amount this work cannot bound at the g_min-driven
+   pitch.
+2. *Certain, and the magnitude is solid:* the row-to-column crossing term exists, is not small,
+   and is topologically unrepresentable in the current model at any parameter value.
+
+Neither touches the DC MAC accuracy the study measures, because a `.op` solve has no capacitors
+in it. Both matter for transient reads. [REPORT.md §6.1](REPORT.md) records the consequence for
+the settling section.
 
 ---
 
