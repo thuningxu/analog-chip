@@ -11,6 +11,11 @@ column, plus an optional shunt capacitor per pitch), so IR drop and RC settling 
 the simulator instead of out of a spreadsheet. Every operating-point result is cross-checked
 against an independent nodal-analysis solve written directly in numpy.
 
+On top of the circuit, `fp_matmul.py` drives the array as a general matrix-multiply engine and
+`int8_matmul.py` runs **quantized int8 matmul** on it — int8 weights, int8 activations, exact
+int32 reference, int8 requantized output — which gives the study a binary pass/fail criterion
+instead of a tolerance. See [int8 matmul on the array](#int8-matmul-on-the-array).
+
 ## Scope
 
 **This repository is a netlist generator and a simulation study. It is not a chip, and there
@@ -26,6 +31,8 @@ What is here:
 - Two access-device routes: an uncalibrated placeholder `.model`, and the real sky130
   `sky130_fd_pr__nfet_01v8` via `sky130_hdl21.compile()`.
 - An independent numpy MNA solve of the same topology, used as a correctness oracle.
+- A float64 matmul engine on top of the array, and an int8 quantized layer on top of that,
+  each with its own exactness gate at zero parasitics.
 
 What is **not** here — do not read any of it into the numbers below:
 
@@ -40,8 +47,10 @@ What is **not** here — do not read any of it into the numbers below:
 - **No peripheral circuits.** No DAC, no ADC, no sense amplifier, no transimpedance
   amplifier. Columns are held at virtual ground by ideal 0 V voltage sources — a perfect TIA
   with infinite gain and bandwidth and no noise.
-- **No inference-accuracy study.** One stimulus vector and one random weight matrix, not a
-  statistical campaign over networks, corners, or device populations.
+- **No inference-accuracy study.** One stimulus vector and one random matrix pair per
+  configuration, not a statistical campaign over networks, corners, or device populations. The
+  int8 match rates below are measured on random data; they say nothing about top-1 accuracy on
+  a real network, which depends on whether the errors land on the argmax.
 
 `docs/REPORT.md` has a full [limitations
 section](docs/REPORT.md#limitations-and-threats-to-validity); read it before quoting any
@@ -110,15 +119,79 @@ All from a 32×32 array, `g_min` = 1 µS, `g_max` = 100 µS, 0T1R cells, `x` uni
 
 ![Access-FET Ron compresses the top of the conductance range far harder than the bottom](docs/figures/ron-compression.png)
 
+## int8 matmul on the array
+
+`int8_matmul.py` runs the workload a real compute-in-memory inference accelerator executes:
+symmetric int8 weights, symmetric int8 activations, an exact int32 accumulator as the
+reference, and an int8 requantized output. Underneath it, `fp_matmul.py` is the analog matmul
+engine — it encodes matrices onto the real `Tile`, runs ngspice, and decodes the sensed
+currents back to numbers. The pass/fail question is binary: **does the analog path produce the
+exact int8 value the integer reference produces?**
+
+```bash
+uv run int8_matmul.py       # int8 demo at 0 / 0.25 / 1 / 5 ohm/pitch      ~6 s
+uv run verify_int8.py       # 4 checks; int32 exactness is the gate        ~6 s
+```
+
+| result | number | why it matters |
+| --- | --- | --- |
+| zero parasitics, 0T1R | `round(analog)` **equals** `A_q @ B_q` elementwise, over every tested shape and both scale granularities — worst absolute error **3.6e-11** of the 0.5 rounding allows | the encode, decode, tiling and quantization are exact; anything worse at nonzero `r_wire` is physics, not arithmetic |
+| 1 Ω/pitch, per-channel + per-channel gain | **94.5%** of int8 outputs exactly correct, worst deviation **1 LSB** | against 71.9% uncalibrated. Per-channel calibration never misses by more than one LSB out to 5 Ω/pitch |
+| exact int32 accumulation | needs **20.0 bits** at N = 32; the analog path delivers **6.8–11.5** | unreachable at any realistic parasitic level, which is why the requantized int8 output is the metric and the accumulator is not |
+| per-channel scales vs one global gain | **94.5% vs 90.6%** at 1 Ω/pitch, **74.2% vs 62.5%** at 5 Ω/pitch | per-channel weight quantization already carries one multiplier per output channel, so absorbing per-column IR droop costs **no hardware** |
+| calibration transfer, Gaussian → ReLU activations | **96.9%** at 1 Ω/pitch, within 0.8 points of refitting in-sample | per-column droop is a property of the array, not the activations, so a one-time factory calibration is real |
+| array height at 0.5 Ω/pitch | exact to **N = 16**, 96.9% at N = 32, 85.9% at N = 64 | the analog contraction depth is ~32 rows here, not 128 or 1024 |
+| sky130 1T1R, **zero** wire R | **15.6% → 53.1%** with per-channel calibration, against 81.3% → **100%** for pure IR droop | Ron compression is a per-cell nonlinearity, so a per-column gain cannot remove it. The access device is the harder problem |
+
+![Six-panel int8 study: output match rate and worst LSB deviation versus wire resistance, accumulator bits against the exactness thresholds, array height, 0T1R versus 1T1R, and calibration transfer](docs/figures/int8-accuracy.png)
+
+**Exactness at zero parasitics is a statement about the encoding and the solver, not about
+analog computing.** With no wire resistance and a linear resistive cell the crossbar *is* an
+exact linear map, and ngspice solves it in float64. The fidelity achievable on any real array
+is set by the non-idealities in [`docs/REPORT.md`](docs/REPORT.md) plus two categories this
+project does not model at all: **ADC quantization** — there is no ADC, so every match rate
+above assumes the accumulator is digitized perfectly — and **device variation**, which in
+published ReRAM arrays is frequently the dominant accuracy limit and, unlike IR droop, is not
+a per-column gain either. Both would move every number downwards.
+
+### The float engine underneath
+
+`fp_matmul.py` computes `C = A @ B` for arbitrary float64 matrices; int8 is a layer on top.
+Weights carry `A` transposed and normalized per block, row voltages carry a column of `B`, and
+the `(g_max − g_min)·Wᵀv` identity inverts to give the product back with no fitted gain in the
+path. Contraction beyond the array's row count is tiled and accumulated in float64 with a
+**per-block scale factor** — block floating point. Inputs are split `b = b⁺ − b⁻` and driven in
+two unipolar passes by default, because a real row driver cannot go negative. All `K` input
+columns go into **one deck as `2K` instances of the same tile subcircuit**, solved in a single
+`.op` — measured **5.2x** faster than one launch per column on the sky130 route.
+
+```bash
+uv run fp_matmul.py         # 3 float matmuls at 0 / 1 / 5 ohm/pitch      ~2 s
+uv run verify_matmul.py     # 4 checks on the float engine                ~4 s
+```
+
+In float terms the same array carries **7.3 of FP32's 24 mantissa bits** at 1 Ω/pitch (8.6
+after a gain fit), 5.0 at 5 Ω/pitch, and 48 — the float64 solver floor — at zero parasitics.
+The int8 framing is the useful one precisely because "7.3 of 24 mantissa bits" has no pass/fail
+reading while "94.5% of int8 outputs exactly right, worst case 1 LSB" does.
+
+Derivations, the accumulator-width argument, cost model, measured timings and the full
+limitations list are in [`docs/MATMUL.md`](docs/MATMUL.md).
+
 ## Files
 
 | file | role |
 | --- | --- |
 | `crossbar.py` | `Cell` → `Crossbar` → `Tile` generators, MAC and settling testbenches, error metrics, the sweep in `__main__` |
 | `verify_mna.py` | nine machine checks, including the independent numpy MNA solve |
+| `int8_matmul.py` | symmetric int8 quantization, requantization, per-channel gain calibration, metrics |
+| `verify_int8.py` | four machine checks for the int8 layer; int32 exactness is the gate |
+| `fp_matmul.py` | float64 `A @ B` on the array: encode/decode, block-FP tiling, the batched testbench |
+| `verify_matmul.py` | four machine checks for the float engine; exactness at zero parasitics is the gate |
 | `ngspice_compat.py` | ngspice ≥ 43 rawfile-header shim for vlsirtools 7.0.0; see below |
 | `docs/DESIGN.md` | generator hierarchy, the differential-pair derivation, full parameter reference |
 | `docs/REPORT.md` | methodology, verification, results, limitations, reproduction |
+| `docs/MATMUL.md` | the int8 matmul: quantization, the accumulator-width argument, measured fidelity, cost; and the float engine underneath |
 | `docs/diagrams/` | schematic diagrams (SVG) for the cell, array, tile, and testbench |
 | `docs/figures/` | measured result plots (PNG) |
 
