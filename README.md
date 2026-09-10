@@ -219,8 +219,23 @@ limitations list are in [`docs/MATMUL.md`](docs/MATMUL.md).
 | `docs/DESIGN.md` | generator hierarchy, the differential-pair derivation, full parameter reference |
 | `docs/REPORT.md` | methodology, verification, results, limitations, reproduction |
 | `docs/MATMUL.md` | the int8 matmul: quantization, the accumulator-width argument, measured fidelity, cost; and the float engine underneath |
+| `scripts/render_layout.py` | regenerates the GDS and rasterizes it with sky130's own layer properties |
 | `docs/diagrams/` | schematic diagrams (SVG) for the cell, array, tile, and testbench |
 | `docs/figures/` | measured result plots (PNG) |
+| `docs/layout/` | the drawn layout: GDS you can open in KLayout, plus rendered views |
+
+## The layout
+
+The cell and array are drawn, not described. Full views, the `g_min` = 1 µS versus 20 µS
+comparison, and instructions for opening the GDS are in
+[docs/LAYOUT.md §12](docs/LAYOUT.md#12-looking-at-the-layout).
+
+![4x4 sky130 crossbar array, 56.2 um across: sixteen 0T1R cells on a 14.04 um pitch, each cell a block of sixteen res_xhigh_po poly resistor stripes, with horizontal met1 row rails and vertical met2 column rails](docs/layout/array-4x4.png)
+
+A 4 × 4 array at the default `g_min` = 1 µS — one mask-programmed poly resistor per
+intersection, row rails horizontal, column rails vertical. `docs/layout/` holds the GDS
+for this and for the 16 × 16 array that was DRC'd with FEOL enabled and LVS-matched
+against an hdl21 netlist of its 4096 devices.
 
 ## Cell configurations
 

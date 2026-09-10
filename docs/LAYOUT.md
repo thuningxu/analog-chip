@@ -1055,3 +1055,71 @@ Left in place above rather than rewritten, so the record shows what changed:
 | "DRC ran with `FEOL = false`" | §10.6 | **superseded for this section only** — §4 through §9 still ran FEOL-off, §11 runs it on |
 | "no crossbar layout has been LVS'd" | §10.8 | **superseded** — a 16 × 16 array of 4096 devices matches, §11.7 |
 | "LVS matched one transistor, on `W` and `L` only" | §10.7 | **still true of §5.** §11.6 is a separate, stronger result on a different device |
+
+---
+
+## 12. Looking at the layout
+
+Everything above is measured off geometry, so here is the geometry. Regenerate with:
+
+```bash
+uv run scripts/render_layout.py
+```
+
+That re-plans the cells through `cell_layout.plan_cell` — the same planner the parasitics
+are derived from, so these images cannot drift from the numbers — writes GDS, and
+rasterizes each view through the KLayout **application** with sky130's own
+`sky130A.lyp`, so every layer colour and fill pattern is the PDK's rather than invented.
+(The `klayout` pip module cannot do this: it ships the database layer with no renderer.)
+
+### The cell, at two `g_min` values
+
+Left, the project default `g_min` = 1 µS → 1 MΩ → **16 stripes, 12.80 × 11.50 µm**, pitch
+14.04 µm. Right, the measured optimum `g_min` = 20 µS → 50 kΩ → **4 stripes, 2.84 × 2.75 µm**,
+pitch 4.45 µm. The stripe count *is* §11.9's argument: the cell shrinks until it hits the
+~4 µm pitch floor, and that shrink is worth 1.33 accumulator bits.
+
+| `g_min` = 1 µS (default) | `g_min` = 20 µS (optimum) |
+| --- | --- |
+| ![0T1R cell at g_min = 1 uS: sixteen res_xhigh_po poly stripes with licon contacts, met1 row rail along the bottom, met2 column rail up the left side](layout/cell-1uS.png) | ![0T1R cell at g_min = 20 uS: four poly stripes, the same rail and tap structure in a cell roughly a fifth the area](layout/cell-20uS.png) |
+
+Red is the `res_xhigh_po` poly body, the pale yellow blocks at each stripe end are the
+`licon` contacts and their poly enclosure, magenta up the left is the met2 column rail,
+blue along the bottom is the met1 row rail, and the small violet square at bottom left is
+the row-tap via.
+
+### The array
+
+4 × 4 at the default `g_min`, 56.2 µm across — enough to see the crossbar structure: one
+resistor per intersection, row rails horizontal (labelled `w0`–`w3`), column rails
+vertical, every cell an instance of the same unit rather than flattened geometry.
+
+![4x4 crossbar array: sixteen cells on a 14.04 um pitch, each a block of sixteen poly resistor stripes, with horizontal met1 row rails labelled w0 to w3 and vertical met2 column rails](layout/array-4x4.png)
+
+And 16 × 16, 224.6 µm across — the array §11.7 LVS-matched against an hdl21 netlist of its
+4096 devices:
+
+![16x16 crossbar array, 224.6 um across, showing the full tiling of 256 cells](layout/array-16x16.png)
+
+### Opening the real thing
+
+The GDS is committed next to the images, so it can be opened directly rather than
+regenerated:
+
+| file | what it is |
+| --- | --- |
+| `docs/layout/cell-1uS.gds` | one cell, `g_min` = 1 µS, with a one-pitch stub of each rail |
+| `docs/layout/cell-20uS.gds` | one cell at the `g_min` optimum |
+| `docs/layout/array-4x4.gds` | 4 × 4 array |
+| `docs/layout/array-16x16.gds` | 16 × 16 array, the one that was DRC'd and LVS'd |
+
+```bash
+# macOS, KLayout installed as an application by `brew install --cask klayout`
+open -a klayout docs/layout/array-16x16.gds
+```
+
+For the PDK's own colours and a correct layer stack, load the technology rather than the
+raw file: in KLayout, **File → Open** with the technology set to `sky130A`, or point
+**View → Layer Properties** at
+`$PDK_ROOT/sky130A/libs.tech/klayout/tech/sky130A.lyp`. Without it the layers render in
+arbitrary colours and the images above will not match what you see.
