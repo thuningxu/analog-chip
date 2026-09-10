@@ -18,8 +18,9 @@ instead of a tolerance. See [int8 matmul on the array](#int8-matmul-on-the-array
 
 ## Scope
 
-**This repository is a netlist generator and a simulation study. It is not a chip, and there
-is no layout.**
+**This repository is a netlist generator and a simulation study. It is not a chip.** There *is*
+sky130 layout — an interconnect skeleton, and a device-level cell tiled into an array — but it is
+drawn to derive parasitics and to check that the cell is legal, not to be taped out.
 
 What is here:
 
@@ -36,15 +37,20 @@ What is here:
 
 What is **not** here — do not read any of it into the numbers below:
 
-- **No cell layout, no floorplan, no place-and-route, no signoff, no tapeout, no silicon.**
-  There *is* GDS: `layout_oracle.py` and `array_layout.py` draw a sky130 crossbar
-  **interconnect skeleton** — rails, crossings, per-cell via taps — run the PDK DRC deck on it
-  clean, LVS a single hand-drawn nfet, and derive `r_row` / `r_col` / `c_row` / `c_col` from the
-  drawn geometry. See [docs/LAYOUT.md](docs/LAYOUT.md). What that is *not*: no memory device is
-  drawn, because **sky130 has no RRAM** and there is nothing to draw; no complete cell exists at
-  device level; the LVS pass compares `W` and `L` only; DRC ran with the deck's `FEOL = false`
-  default, so no diffusion or poly rule was checked; and DRC-clean against one deck at one
-  setting is not tapeout signoff. Nothing has been fabricated or measured on silicon.
+- **No floorplan, no place-and-route, no signoff, no tapeout, no silicon.** There *is* GDS, at
+  two levels. `layout_oracle.py` and `array_layout.py` draw a sky130 crossbar **interconnect
+  skeleton** — rails, crossings, per-cell via taps — DRC it clean, LVS a single hand-drawn nfet,
+  and derive `r_row` / `r_col` / `c_row` / `c_col` from the drawn geometry. `cell_layout.py` then
+  draws a **complete device-level 0T1R cell**: one mask-programmed `sky130_fd_pr__res_xhigh_po_0p35`
+  poly resistor per cell, DRC clean **with FEOL enabled** (381 rule categories, against 145 with
+  the deck's `FEOL = false` default), tiled into a 16 × 16 array that is also DRC clean and
+  **LVS-matches** an hdl21 netlist of its 4096 resistors. See
+  [docs/LAYOUT.md](docs/LAYOUT.md) §11. What that is *not*: **no RRAM device**, because sky130 has
+  none — the resistor is fixed at tapeout, so the array is an inference demonstrator of one frozen
+  weight matrix and not a programmable accelerator; the resistor LVS compares the cell's **total**
+  length only; `poly.9` self-spacing and every `urpm` marker rule are unchecked by the deck; and
+  DRC-clean against one deck at two settings is not tapeout signoff. Nothing has been fabricated
+  or measured on silicon.
 - **No parasitic extraction.** [docs/LAYOUT.md](docs/LAYOUT.md) computes R from sheet
   resistance and squares and C from area and fringe constants parsed out of the PDK — no field
   solver, and the derived `c_row`/`c_col` carry no coupling term because `Crossbar` has nowhere
@@ -52,8 +58,12 @@ What is **not** here — do not read any of it into the numbers below:
   the same order as the modelled shunt at tight pitches (and unbounded by this work at wide
   ones), and **row-to-column crossing capacitance is topologically unrepresentable** in
   `Crossbar` at any parameter value. So the C model is structurally incomplete, not just
-  imprecise. The sweeps below still use *assumed* per-pitch values; LAYOUT.md §9 re-runs the
-  int8 study on derived ones and lands at 3.9 Ω/pitch, not the 1 Ω/pitch used as nominal here.
+  imprecise. The sweeps below still use *assumed* per-pitch values; LAYOUT.md §11 re-runs the int8
+  study on parasitics derived from the drawn cell and lands at **1.755 Ω/pitch** at the default
+  `g_min` = 1 µS, and **0.556 Ω/pitch** at the `g_min` that maximizes fidelity — bracketing the
+  1 Ω/pitch used as nominal here rather than sitting far above it. (LAYOUT.md §9's earlier
+  3.9 Ω/pitch figure is withdrawn: it came from pairing one poly resistor's sheet resistance with
+  a different one's name, and §11.1 documents the error.)
 - **No memristor device physics.** The cell is a linear resistor whose value is set by the
   weight. There is no nonlinearity, drift, read noise, cycle-to-cycle or device-to-device
   variation, and no write/programming dynamics.
@@ -204,7 +214,8 @@ limitations list are in [`docs/MATMUL.md`](docs/MATMUL.md).
 | `ngspice_compat.py` | ngspice ≥ 43 rawfile-header shim for vlsirtools 7.0.0; see below |
 | `layout_oracle.py` | sky130 tech-constant parser, GDS generation and measurement, R/C from geometry, the DRC harness, the LVS attempt |
 | `array_layout.py` | the N×N crossbar interconnect skeleton, derived per-pitch R and C, via/coupling analyses, the accuracy re-run |
-| `docs/LAYOUT.md` | the layout→parasitics chain: corner provenance, DRC and LVS status, derived parasitics, the `g_min` pitch loop, limitations |
+| `cell_layout.py` | a device-level 0T1R cell with a real sky130 poly resistor: cell generator, DRC with **FEOL enabled**, cell and array LVS, the `g_min`/area/IR-drop optimum |
+| `docs/LAYOUT.md` | the layout→parasitics chain: corner provenance, DRC and LVS status, derived parasitics, the `g_min` pitch loop, the device-level cell (§11), limitations |
 | `docs/DESIGN.md` | generator hierarchy, the differential-pair derivation, full parameter reference |
 | `docs/REPORT.md` | methodology, verification, results, limitations, reproduction |
 | `docs/MATMUL.md` | the int8 matmul: quantization, the accumulator-width argument, measured fidelity, cost; and the float engine underneath |

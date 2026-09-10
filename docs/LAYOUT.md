@@ -2,9 +2,11 @@
 
 [`REPORT.md`](REPORT.md) opens by saying that `r_row` / `r_col` / `c_row` / `c_col` are
 **assumed** per-pitch values swept over a plausible range, and that pinning them to real
-geometry is the missing step. This document takes that step. Two new modules draw sky130
+geometry is the missing step. This document takes that step. Three new modules draw sky130
 geometry, DRC it, and compute R and C from the drawn dimensions and process constants parsed
-out of the PDK — then re-run the published int8 accuracy study on the result.
+out of the PDK — then re-run the published int8 accuracy study on the result. §1–§10 do that
+for the **interconnect**; §11 does it for a **complete device-level cell** with a real sky130
+resistor in it, which is what finally makes the pitch an output rather than an assumption.
 
 **Read this first, because the distinction decides what the numbers below are worth.** What
 runs here is
@@ -31,6 +33,16 @@ row and column rails at **3.9 Ω/pitch** — near the top of the range the study
 pessimistic case. At that value the int8 match rate with per-channel calibration is **76.6%**,
 not the 94.5% the 1 Ω/pitch assumption reports.
 
+> **Correction, from [§11](#11-a-real-device-level-cell-0t1r-with-a-mask-programmed-poly-resistor).**
+> The paragraph above is withdrawn and is kept only as the record of what changed. It sized the
+> cell with `xhrpoly`'s 319.8 Ω/□, which belongs to `res_high_po`, not to the `res_xhigh_po`
+> device whose name and widths §8 used — see [§11.1](#111-the-device-res_xhigh_po-and-the-sheet-resistance-8-attached-to-the-wrong-name).
+> On the right device at 2000 Ω/□, a `g_min = 1 µS` cell is **12.80 × 11.50 µm**, the pitch is
+> **14.04 µm**, the rails cost **1.755 Ω/pitch**, and the calibrated int8 match rate is
+> **90.6%** — and the cell has now been drawn, DRC'd with **FEOL enabled** and LVS'd rather than
+> estimated. The direction of §8's argument survives (`g_min` sets the cell area and the cell
+> area sets the rail R); its magnitude does not.
+
 Every number below comes from a run on this machine: KLayout 0.30.10 (application) and the
 0.30.12 pip module, sky130A via volare, ngspice-47, Apple silicon.
 
@@ -42,25 +54,32 @@ Every number below comes from a run on this machine: KLayout 0.30.10 (applicatio
 | --- | --- |
 | `layout_oracle.py` | tech-constant parser, GDS generation and measurement, R/C computation, the hand check, the DRC harness, the LVS attempt |
 | `array_layout.py` | the N×N crossbar interconnect skeleton, per-pitch R and C, the via and coupling analyses, the pitch/resistance loop, the accuracy re-run |
+| `cell_layout.py` | §11: a real device-level 0T1R cell with a sky130 poly resistor in it — the cell generator, DRC with **FEOL enabled**, LVS of the cell and of the array, and the `g_min`/area/IR-drop optimum |
 
 ```bash
 uv run layout_oracle.py                # Stage 1: constants, hand check, DRC both ways, LVS   3.6 s
 uv run array_layout.py                 # Stage 2: skeleton, DRC, derived R/C, the analyses    2.5 s
 uv run array_layout.py --accuracy      # Stage 2 + the int8 and float re-runs in ngspice     28.6 s
+uv run cell_layout.py                  # Stage 3: device cell, FEOL DRC, LVS, array, g_min    ~19 s
+uv run cell_layout.py --accuracy       # Stage 3 + the int8 re-run on drawn parasitics     58-66 s
 ```
 
 Artifacts (GDS, DRC report databases, LVS databases, extracted netlists) land in
-`/tmp/layout_oracle` and `/tmp/xbar_layout`.
+`/tmp/layout_oracle`, `/tmp/xbar_layout` and `/tmp/xbar_cell`.
 
-Nothing in the existing project is modified. Both modules import `crossbar`, `fp_matmul` and
-`int8_matmul` and use them as they are.
+None of the circuit or matmul modules is modified. All three layout modules import `crossbar`,
+`fp_matmul` and `int8_matmul` and use them as they are. `cell_layout.py` reuses
+`layout_oracle`'s tech parser, GDS helpers, DRC and LVS harnesses and `array_layout`'s
+`per_pitch` and `int8_row` rather than reimplementing any of them; the one change it needed
+inside `layout_oracle` was an `extra` keyword on `run_lvs` for passing further `-rd` deck
+switches, which §11.6 explains it cannot do without.
 
 Two environment requirements that `pyproject.toml` does not express, and should:
 
-- The **`klayout` pip module** (0.30.12 here) provides `klayout.db`, which both modules import
-  for GDS generation and measurement. It is installed in the venv but is **not** in
-  `pyproject.toml` or `uv.lock`, so a `uv sync --exact` would remove it and break both
-  modules. Add it to `[project].dependencies` before relying on this chain.
+- The **`klayout` pip module** (0.30.12 here) provides `klayout.db`, which all three modules
+  import for GDS generation and measurement. It is installed in the venv but is **not** in
+  `pyproject.toml` or `uv.lock`, so a `uv sync --exact` would remove it and break all of
+  them. Add it to `[project].dependencies` before relying on this chain.
 - The **KLayout application binary** is separate from the pip module and is what runs the DRC
   and LVS decks — the module cannot execute a `.lydrc`. `layout_oracle.KLAYOUT_BIN` points at
   `~/klayout-local/klayout.app/Contents/MacOS/klayout`; override it or pass `klayout=` to
@@ -423,6 +442,13 @@ the settling section.
 
 ## 8. The pitch/resistance loop: `g_min` sets everything
 
+> **Superseded by [§11](#11-a-real-device-level-cell-0t1r-with-a-mask-programmed-poly-resistor).
+> The numbers in this section are wrong** and are kept only as the record of what changed.
+> `xhrpoly`'s 319.8 Ω/□ belongs to `res_high_po`. sky130's *highest*-sheet resistor is
+> `res_xhigh_po` (`uhrpoly`) at **2000 Ω/□** — 6.25× higher — so every square count, area and
+> pitch below is roughly 6× too large. The direction of the argument holds (`g_min` sets the
+> cell area, and the cell area sets the rail resistance); the magnitudes do not.
+
 This is the design loop that decides which row of §9's table a real array lands on, and it
 runs entirely against the cell, not the wire.
 
@@ -512,6 +538,13 @@ accuracy is limited by `g_min` through the cell area, not by the wire directly**
 `5 Ω/pitch` column, which the study presented as a pessimistic bound, is closer to a realistic
 sky130 design point than the `1 Ω/pitch` column it treated as nominal.
 
+> **Partly corrected by [§11](#11-a-real-device-level-cell-0t1r-with-a-mask-programmed-poly-resistor).**
+> The "30 µm cell" and "3.9 Ω/pitch" above inherit §8's wrong device. On `res_xhigh_po` at
+> 2000 Ω/□ the *drawn* cell gives a **14.04 µm** pitch and **1.755 Ω/pitch**, so a realistic
+> sky130 design point sits between the `1 Ω` and `2 Ω` columns — **not above `5 Ω`**. The first
+> claim survives: accuracy is limited by `g_min` through cell area rather than by the wire
+> directly. The claim that `5 Ω/pitch` is the realistic column is withdrawn.
+
 Per-channel calibration holds up: it never misses by more than one LSB at any derived value,
 including the g_min-driven one, which is the same conclusion `MATMUL.md` reached at 5 Ω/pitch.
 
@@ -563,3 +596,462 @@ Read these before quoting anything above.
     and block size from parsed sheet resistance, the PDK's binned device widths and the deck's
     `poly.9` spacing. No serpentine was drawn or DRC'd; corner squares, contact heads and the
     `rpm` marker layer would all make the real block somewhat larger.
+
+---
+
+## 11. A real device-level cell: 0T1R with a mask-programmed poly resistor
+
+Everything above §10 is interconnect. This section closes the loop the other way: it gives up
+programmability, draws a **real sky130 device** in the cell, and lets the pitch fall out of the
+device instead of being assumed alongside it. `cell_layout.py` is the module.
+
+```bash
+uv run cell_layout.py                # cell + FEOL DRC + LVS + array + g_min sweep      ~19 s
+uv run cell_layout.py --accuracy     # the above plus the int8 re-run in ngspice       58-66 s
+```
+
+Artifacts land in `/tmp/xbar_cell`. Same machine and versions as the rest of this document. The
+`--accuracy` figure is a range because ngspice dominates it and varies run to run; everything
+else is repeatable to the digit, and the module asserts each DRC and LVS verdict rather than
+printing it.
+
+**Headline.** A cell that physically holds a `g_min` = 1 µS resistor is **12.80 × 11.50 µm**, so
+the pitch is **14.04 µm** and the rails cost **1.755 Ω/pitch** — not the 3.875 Ω/pitch §8
+predicted, and not the 1.0 Ω/pitch the study assumed. §8 was wrong by 5.5× in area for a reason
+worth stating plainly: it paired one device's sheet resistance with another device's name (§11.1).
+The cell is DRC clean **with FEOL enabled** (381 rule categories, against 145 with the stock
+deck's `FEOL = false`), and both the cell and a 16 × 16 array of it LVS-match hdl21 reference
+netlists built from the PDK's own resistor device.
+
+### 11.1 The device: `res_xhigh_po`, and the sheet resistance §8 attached to the wrong name
+
+sky130 ships **two** families of binned poly precision resistor, on two different marker layers,
+with a 6.25× difference in sheet resistance and — the trap — confusing names in magic's
+technology file:
+
+| magic type-set | sheet R | tech-file line | marker | the device it extracts as | `device` line |
+| --- | --- | --- | --- | --- | --- |
+| `xhrpoly` | 319.8 Ω/□ | `sky130A.tech:5116` | `rpm` 86/20 | `sky130_fd_pr__res_high_po` | `:6036` |
+| `uhrpoly` | **2000 Ω/□** | `sky130A.tech:5117` | `urpm` 79/20 | `sky130_fd_pr__res_xhigh_po` | `:6136` |
+
+The type-set named "xhrpoly" is the device named "**high**\_po"; the type-set named "uhrpoly" is
+the device named "**xhigh**\_po". [§8](#8-the-pitchresistance-loop-g_min-sets-everything) took
+319.8 Ω/□ from the first row and the *name* and *binned widths* from the second, i.e. two halves
+of two different devices. Both families happen to ship the same five widths — 0.35, 0.69, 1.41,
+2.85, 5.73 µm — so nothing failed loudly; the number was just 6.25× too small.
+
+**`res_xhigh_po` is the right choice on both counts.** It needs 6.25× fewer squares, and its
+constant is self-consistent where the other one is not:
+
+- `sky130_fd_pr__res_xhigh_po__base.model.spice` sets `rsheet = 2000.0` with
+  `rbody = l*rsheet/w`, and the LVS deck's extractor is handed **2000** (`sky130.lvs:2254`).
+  Three independent files in the PDK agree exactly.
+- `res_high_po`'s own binned models put `rsheet` in ohms per µm of length, so the effective sheet
+  resistance is `rsheet · w` and it is **width-dependent**: 389.3 Ω/□ at the 0.35 µm bin,
+  339.0 at 0.69, 324.4 at 1.41, 323.6 at 2.85, 323.5 at 5.73. The tech file's single 319.8 is the
+  wide-line asymptote, so using it at the narrowest bin — which is what §8 did, and what any
+  area-minimizing design does — is **22% optimistic**.
+
+The chosen device is `sky130_fd_pr__res_xhigh_po_0p35`: 0.35 µm wide, 2000 Ω/□.
+
+**Width is not a free parameter.** The LVS deck recognizes a bin by looking for an edge of that
+length in the marked body (`poly_xhigh_0p35 = poly_res_2k.interacting(...with_length(0.34.um,
+0.36.um))`, `sky130.lvs:1412`), and the DRC deck's `poly.3` sets a 0.33 µm floor under all of
+them. A drawn width that is not one of the five bins extracts as no device at all. Length is the
+only knob.
+
+### 11.2 The device decision: 0T1R, no access transistor — and what that costs
+
+**There is no access FET, and for a mask-programmed array that is not a simplification, it is
+the correct topology.** The access device in a real RRAM array does two jobs: it isolates one
+cell so a write pulse lands only there, and it blocks sneak paths when part of the array is
+addressed. A mask-programmed resistor array does neither, because:
+
+- **There is no write.** The conductance is set by drawn length at tapeout. Nothing to isolate.
+- **No node floats during a MAC.** Every row is driven by a source and every column is held at
+  virtual ground by the sense path, so the array is a fully-determined resistive network with no
+  high-impedance node for a sneak current to develop across. This is not an argument, it is
+  already measured: [`REPORT.md`](REPORT.md) records 0T1R arrays matching an independent numpy
+  MNA solve to ~1e-12, which is impossible if there were unaccounted conduction paths.
+
+Deleting the access FET deletes the two largest precision limiters the project measured — the
+7.57% `g_max` Ron compression of [`REPORT.md` §5](REPORT.md) (4.3 effective bits against 6.5)
+and the 198.8 Ω of 1T1R tap resistance of §7 above. Both go to zero.
+
+**The honest cost: the weights freeze at tapeout.** This is an inference-only demonstrator of a
+*fixed* linear map, not a programmable accelerator. Retargeting it to a different weight matrix
+is a new mask set. Everything the project says about analog matmul fidelity still applies; nothing
+it says or could say about programming, endurance, retention or drift applies, because there is
+no programmable element left.
+
+One further honest note, which cuts the other way from the brief's framing: `g_max` is **not**
+drawn. The cell is sized for the *largest* resistance in the array, `1/g_min`, because every cell
+must physically hold whatever resistor its weight calls for and the pitch is set by the worst
+case. A `g_max` cell is 5 squares of the same stripe in the same 14.04 µm box, mostly empty.
+
+### 11.3 The cell layout: straight bars, strapped in series, not a poly serpentine
+
+The brief for this work said "serpentine". The cell does not serpentine the **poly**; it draws
+`stripes` straight bars and wires them in series with **li1 straps** that alternate top and
+bottom. Three reasons, in order of weight:
+
+1. **A poly corner has no exact square count.** It is worth somewhere between 0.5 and 0.6 squares
+   depending on the conformal map, and a *precision* resistor whose value depends on a corner
+   count is not precise. Straight bars give `squares = Σ L/W` exactly.
+2. **LVS gets stronger.** Each bar is an independently extracted `res_xhigh_po_0p35` with its own
+   drawn length; a continuous serpentine is one device whose `L` KLayout would have to
+   square-count through the corners.
+3. **It is nearly free.** The head overhead is `2 × 0.28 µm` per stripe against a stripe body
+   tens of times longer, so the strapped block is **+6.2%** in side length against the equivalent
+   continuous serpentine (12.80 µm vs 12.05 µm). The module prints both numbers every run.
+
+The layer stack, all of it required and all of it cross-checked against the DRC deck's own
+`polygons(l, d)` calls rather than hardcoded:
+
+| layer | GDS | role |
+| --- | --- | --- |
+| `poly` | 66/20 | the bars, plus a contact head at each end |
+| `poly_rs` | 66/13 | marks the **body**. The LVS deck takes `poly ∖ poly_rs` as the terminals (`poly_con`, `sky130.lvs:1166`), so this marker's edge — not the contact — is what sets the extracted `L` |
+| `urpm` | 79/20 | the 2 kΩ/□ bin selector |
+| `psdm` | 94/20 | p+ implant; `poly_res_2k` requires it (`sky130.lvs:1410`) |
+| `npc` | 95/20 | nitride poly cut; `licon.15` and `licon.18` require it over every poly contact |
+| `licon` | 66/44 | poly contact, exactly 0.17 µm square |
+| `li1`, `mcon`, `met1`, `via`, `met2` | 67/20, 67/44, 68/20, 68/44, 69/20 | the straps and the two terminal taps |
+
+Cell floorplan, one pitch square: the **met1 row rail** runs in x along the bottom, the **met2
+column rail** in y along the left, and the resistor block sits above and right of both. The last
+bar's bottom head taps straight down to the row rail through licon → li1 → mcon. The first bar's
+bottom head taps down to a met1 island that runs left under the column rail and takes a via up to
+it. The row terminal's li1 crosses over that island on a different layer with no mcon between
+them, which is the only thing keeping the two nets apart.
+
+Every dimension is parsed from the deck line that emits its rule — 28 of them, printed each run:
+
+```
+        ct.1 0.17         ct.2 0.19         li.1 0.17         li.3 0.17
+        li.5 0.08         li.6 0.0561    licon.1 0.17     licon.15 0.1
+     licon.2 0.17      licon.8 0.05         m1.1 0.14         m1.2 0.14
+        m1.4 0.03         m1.5 0.06         m1.6 0.083        m2.1 0.14
+        m2.2 0.14         m2.5 0.085        m2.6 0.0676   n/psdm.1 0.38
+       npc.1 0.27        npc.2 0.27       poly.3 0.33       poly.9 0.48
+       rpm.2 0.84        rpm.3 0.2        via.1a 0.15      via1.5a 0.085
+```
+
+### 11.4 The cell, with dimensions
+
+At the project's default `g_min` = 1 µS, i.e. a 1 MΩ cell:
+
+```
+  1000 kohm target -> 16 x 10.94 um of 0.35 um res_xhigh_po = 500.1 squares = 1000.23 kohm body
+  16 stripes at 0.83 um stripe pitch (0.35 drawn + 0.48 poly.9 space), 0.28 um contact head per end
+  resistance, drawn:  body                    1000.23 kohm  (500.1 squares x 2000 ohm/square)
+                      16 contact heads           9.40 kohm  (0.93% of the cell, at 587.8 ohm/stripe from the model)
+                      li1 straps                 0.48 kohm  (0.05%)
+                      total                   1010.12 kohm  -> g = 0.9900 uS against the 1 uS asked for
+  cell bounding box: 14.04 x 14.04 um (197.1 um^2), block 12.80 x 11.50 um at (1.01, 1.49)
+```
+
+| quantity | value | where it comes from |
+| --- | --- | --- |
+| stripes | 16 | the count that makes the block squarest, since a square block minimizes the *pitch* |
+| body length per stripe | 10.94 µm | `1/g_min / 2000 Ω/□ × 0.35 µm / 16`, snapped to the 5 nm grid |
+| squares | 500.114 | `16 × 10.94 / 0.35`, exact for rectangles |
+| stripe pitch | 0.83 µm | `0.35` drawn + `0.48` (`poly.9`, resistor-to-poly space) |
+| poly block | 12.80 × 11.50 µm | `16 × 0.83 − 0.48` by `10.94 + 2 × 0.28` |
+| **cell pitch** | **14.04 µm** | block + `urpm` enclosure (`rpm.3`, 0.2) + `urpm`-to-`urpm` gap (`rpm.2`, 0.84) |
+| contact-head resistance | 9.40 kΩ | 16 × 587.8 Ω/stripe, the model's own `rcon(w)` polynomial |
+| strap resistance | 0.48 kΩ | 15 straps × 0.83 µm of li1 at 12.8 Ω/□ over a 0.33 µm pad |
+
+**The contact and strap resistance is a real cost of the strapped topology and it is not zero.**
+At 1 MΩ it is 0.98% of the cell — nothing. At 20 kΩ (`g_min` = 50 µS) the same overhead is
+**5.6%**, because the contact count falls linearly with the stripe count while the body falls
+linearly with total length. The module reports the drawn `g` including it (0.9900 µS, not 1.0),
+and the `g_min` sweep and the int8 re-run both use the drawn value.
+
+**Two PDK statements of the contact resistance, and they disagree by 1.93×.** The device's own
+model gives `rcon = −46.62/w² + 331.73/w + 20.576` = **587.8 Ω** per stripe for both heads
+(`sky130_fd_pr__res_xhigh_po__base.model.spice`); magic gives `contact pc,xpc 152000`
+(`sky130A.tech:5136`), i.e. 2 × 152 = **304 Ω** for the same two cuts. Both are parsed, both are
+reported, and the **model's** figure is the one used downstream because it is the one that would
+actually simulate. Swapping to magic's moves the `g_min` optimum's accumulator bits by 0.01 —
+the conclusion does not depend on the choice, which is why it is safe to state one.
+
+**The SI-versus-micron hazard, closed end to end.** [§5.1](#51-the-si-versus-micron-boundary-is-a-recurring-hazard-in-this-toolchain-not-a-one-off)
+lists three silent unit failures in this toolchain and a resistor adds two more places to have
+one: a drawn length in database units, and a model `l` that a tool may read as metres. So
+`verify_cell` reads the written GDS **back** and re-derives everything from the measured polygons
+before anything downstream runs:
+
+```
+  measured back out of cell.gds: 16 marked bodies, widths [0.35], lengths [10.94] um
+  -> 175.04 um of marked resistor, 500.1143 squares, 1000.23 kohm; matches the plan exactly
+```
+
+and KLayout's LVS extractor, reading the same file through an entirely different code path,
+independently reports `L = 175.04`. Note also that **magic and KLayout do not agree on what `l`
+means for this device**: magic's extraction rule is `l=l+0.16` (`sky130A.tech:6058`), KLayout's is
+the marked length itself. Neither is wrong. Neither can be assumed.
+
+### 11.5 DRC with FEOL enabled — and proof that enabling it changed something
+
+**This is the decisive difference from §4 and §6.** The stock deck ships `FEOL = false`
+(`sky130A.lydrc:46`), which was defensible for a metal-only skeleton and would be meaningless
+here: a poly resistor is almost entirely front-end geometry. The flag is a plain Ruby assignment,
+not a `-rd` variable, so `feol_deck` writes a **patched copy** with `FEOL = true` and leaves the
+PDK read-only.
+
+| layout | `FEOL = false` | `FEOL = true` |
+| --- | --- | --- |
+| rule categories | 145 | **381** |
+| the cell | CLEAN, 1.17 s | **CLEAN, 1.71 s** |
+| the 16 × 16 array | — | **CLEAN, 1.79 s** |
+| the cell with its stripes narrowed to 0.32 µm | **CLEAN** | **FAIL: `poly.3` ×16, `licon.8a` ×32** |
+
+Enabling FEOL adds **236 rule categories**, and the cell needed no geometry changes to pass them
+— the layout was built from the FEOL rule values in the first place, so the run is a confirmation
+rather than a debug loop.
+
+**The planted violation.** A FEOL-enabled harness that has only ever run on clean layouts is not
+a tested harness, and §4's `bad_wire_gds` proves nothing about the front-end half of the deck
+because it is metal only. So `bad_cell_gds` takes the real cell and narrows its resistor stripes
+by one grid step below `poly.3`'s 0.33 µm minimum — one edit, on grid so the off-grid rules stay
+quiet — and the module asserts that the result is **clean with FEOL off** and trips **`poly.3`
+once per stripe** with FEOL on. It also trips `licon.8a` ×32, which is correct and not noise: the
+same narrowing drops the poly enclosure of each contact from 0.09 µm to 0.075 µm against that
+rule's 0.08 µm. Both are front-end rules; both are invisible to the stock deck.
+
+Two limits on the FEOL result that the run does not let you forget:
+
+- **`poly.9` does not check a resistor against itself.** It is coded as
+  `poly.and(rpm.or(urpm).or(poly_rs)).separation(poly.or(difftap), 0.48, ...)`, and when the
+  resistor *is* the poly on both sides of the comparison the check degenerates. Verified directly:
+  two 0.30 µm resistor stripes at 0.30 µm spacing report `poly.3` twice and **not** `poly.9`. The
+  layout honours the 0.48 µm rule anyway, but DRC did not prove that it does.
+- **The deck codes no `urpm` rules at all.** `rpm.1a` … `rpm.10` exist for the 86/20 marker;
+  the only rules that mention `urpm` are `poly.3` and `poly.9`. So the `urpm` width and spacing
+  used here (1.27 µm and 0.84 µm, borrowed from `rpm.1a` and `rpm.2`) are honoured by
+  construction and **unchecked by this deck**. A `res_high_po` cell would get the full marker rule
+  set at 6.25× the area; that is the real trade behind §11.1's device choice.
+
+### 11.6 LVS: matched, and this time the comparison is not hollow
+
+**Status: MATCH, on the cell and on the 16 × 16 array.**
+
+```
+  as hdl21 emits it                      LVS NO MATCH
+  um->m adapter, no schematic_simplify   LVS NO MATCH
+  um->m adapter + schematic_simplify     LVS MATCH
+```
+
+```
+.SUBCKT xbar_cell b col row
+XR$1 row col b sky130_fd_pr__res_xhigh_po_0p35 R=1000228.57143 L=175.04 W=0.35
++ A=61.264 P=361.28
+.ENDS xbar_cell
+```
+
+The reference netlist is built through hdl21 from `sky130_hdl21.ress["PM_PREC_0p35"]`, the PDK's
+own `ExternalModule` for `sky130_fd_pr__res_xhigh_po_0p35`. It is instantiated **directly** rather
+than through `h.PhysicalResistor`, because `Sky130Walker`'s resistor path discards the caller's
+length and substitutes `default_prec_res_L` (`pdk_logic.py:254`) — every cell would netlist as a
+0.35 µm resistor. As in §5, the deck used is `sky130.lvs`, never the `sky130.lylvs` stub.
+
+**What is actually compared — measured, not read off the deck.** §5's MOS match turned out to be
+much weaker than "LVS MATCH" implies, so the same question is put to this device empirically by
+breaking one thing at a time:
+
+| what was changed | result | conclusion |
+| --- | --- | --- |
+| nothing | MATCH | baseline |
+| `L` × 1.004 (+0.4%) | MATCH | inside the tolerance |
+| `L` × 1.006 (+0.6%) | **NO MATCH** | **`L` is compared, and the 0.5% tolerance is real** — the boundary is measured, not quoted |
+| `L` × 1.10 | NO MATCH | — |
+| device bin `0p35` → `0p69` | **NO MATCH** | the bin is compared, through the extracted device class name |
+| schematic `R = 0` vs extracted `R = 1000228.6` | MATCH anyway | **`R` is not compared** |
+| schematic `W = 0` vs extracted `W = 0.35` | MATCH anyway | **`W` is not compared** |
+
+That matches the deck's own declaration — `BResistorFixedWidth` at `sky130.lvs:465` sets
+`enable_parameter("R", false)`, `("W", false)`, `("L", true)`, and `:2255` puts a 0.5% relative
+tolerance on `L` — and it is a **materially stronger** result than §5's. `L` is the one parameter
+the resistance depends on (`R = 2000 · L / W`), and `W` being uncompared costs nothing because it
+is pinned by the bin: a wrong drawn width does not extract as this device at all.
+
+Two things the match does **not** cover, both discovered rather than assumed:
+
+- **It checks the total length, not the subdivision.** KLayout's resistor device class combines a
+  series chain during extraction, so the 16 drawn bars arrive at the comparer as **one** device
+  with `L = 175.04`. A cell drawn as 8 bars of 21.88 µm would compare equal. The square count is
+  verified; the geometry that produced it is not.
+- **It needs `-rd schematic_simplify=true`.** The deck combines series devices on the layout side
+  inside the extractor and on the schematic side only behind that switch, whose default is
+  `false` (`sky130.lvs:1073`). Without it a correct layout and a correct netlist do not match, and
+  the diagnostic says only "Netlists don't match".
+
+**A fourth instance of the units hazard of §5.1, and it is a new one.** KLayout's SPICE reader
+reads a resistor's `l` as **SI metres** and stores micrometres, exactly as it does a MOS `W`/`L`:
+`l=11.67` arrives as `L = 11670000`. `layout_oracle.lvs_netlist_units` already undoes precisely
+this factor and needed no change — its regex matches `l='...'`, and `mult='1'` is not a false
+positive because `\b` does not fire mid-word. The "as hdl21 emits it" row above is that failure,
+reproduced deliberately.
+
+### 11.7 The array at the real pitch, and its parasitics
+
+`array_gds` puts the full-length rails in the top cell and instantiates the unit cell as one
+`CellInstArray`. That is not tidiness — flat, a 16 × 16 array of a 16-stripe cell is ~50 000
+polygons, and the DRC deck runs `deep`, so the hierarchy is what keeps a FEOL run on the array in
+the same time class as a run on one cell.
+
+```
+  /tmp/xbar_cell/array.gds  224.6 x 224.6 um, 256 cells, 4096 resistor stripes
+  met1 3708.3 um^2, poly 16486.4 um^2 (32.7% of the die in resistor)
+  FEOL on   381 rules  DRC CLEAN: array.gds, 381 rules, 1.79 s
+  LVS       LVS MATCH
+```
+
+**A crossbar layout has now been LVS'd.** [§10.8](#10-limitations) said none had been, on the
+grounds that a crossbar with no device in it has nothing to match against. With a device in the
+cell that reason is gone: 256 cells × 16 stripes = **4096 drawn resistors** against an hdl21
+netlist of the same, matched hierarchically on the `xbar_cell` subcircuit, with 16 met1 row labels
+and 16 met2 column labels naming the rails.
+
+Per-pitch R and C come from `array_layout.per_pitch` unchanged — two rails one pitch apart in
+length, measured through the same GDS round trip §3's hand check pins, and differenced. Nothing
+about the method changed; only the pitch, which is now a device output:
+
+| | pitch | `w_row`/`w_col` | `r_row` | `r_col` | `c_row` | `c_col` |
+| --- | --- | --- | --- | --- | --- | --- |
+| project default **assumption** | — | — | 1.0 | 1.0 | 0 | 0 |
+| §7 `relaxed` skeleton | 2.0 µm | 0.5 | 0.500 | 0.500 | 1.88e-16 | 1.69e-16 |
+| §9 `g_min-driven` skeleton | 31 µm | 1.0 | 3.875 | 3.875 | 3.32e-15 | 2.88e-15 |
+| **this cell, drawn** | **14.04 µm** | **1.0** | **1.755** | **1.755** | **1.501e-15** | **1.306e-15** |
+
+The Elmore settling estimate [`REPORT.md` §6](REPORT.md) validated gives `r·c·N²/2` = 3.37e-13 s
+and, with that section's measured 1.3× correction, τ₆₃ ≈ **0.44 ps**. Wire RC remains a non-issue.
+
+### 11.8 The int8 study on the drawn parasitics
+
+Same configuration as [§9](#9-the-payoff-the-accuracy-study-on-derived-parasitics) and
+[`MATMUL.md` §3.2](MATMUL.md) — `A (16,32) @ B (32,8)`, 16 × 16 tile, 0T1R, unipolar two-pass,
+batched, seed 0 — so every row is comparable. The assumed rows reproduce the published numbers
+exactly. The drawn rows use the drawn `g_min` (including contact and strap resistance) and the
+derived `r_row`/`r_col`/`c_row`/`c_col` for that cell's own pitch.
+
+| configuration | pt raw | pt + gain | pc raw | **pc + per-channel gain** | worst LSB raw → cal | accum bits (rms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| assumed `r_wire` = 0 | 100.00 | 100.00 | 100.00 | **100.00** | 0 → 0 | 48.63 |
+| assumed `r_wire` = 0.25 | 92.97 | 98.44 | 89.06 | **99.22** | 1 → 1 | 11.54 |
+| assumed `r_wire` = 1 | 74.22 | 90.62 | 71.88 | **94.53** | 2 → 1 | 9.55 |
+| assumed `r_wire` = 5 | 32.03 | 62.50 | 26.56 | **74.22** | 7 → 1 | 7.26 |
+| §9 `g_min-driven`, 3.875 | 35.94 | 68.75 | 32.81 | **76.56** | 6 → 1 | 7.62 |
+| **drawn** `g_min` 1 µS, r 1.755 | 61.72 | 80.47 | 57.81 | **90.62** | 3 → 1 | 8.75 |
+| **drawn** `g_min` 2 µS, r 1.376 | 71.09 | 84.38 | 61.72 | **91.41** | 2 → 1 | 9.09 |
+| **drawn** `g_min` 5 µS, r 0.925 | 73.44 | 88.28 | 71.09 | **93.75** | 2 → 1 | 9.63 |
+| **drawn** `g_min` 10 µS, r 0.717 | 73.44 | 89.06 | 71.88 | **94.53** | 2 → 1 | 9.92 |
+| **drawn** `g_min` 20 µS, r 0.556 | 74.22 | 89.84 | 71.88 | **94.53** | 2 → 1 | **10.08** |
+| **drawn** `g_min` 30 µS, r 0.510 | 70.31 | 86.72 | 71.88 | **94.53** | 2 → 1 | 9.94 |
+| **drawn** `g_min` 40 µS, r 0.510 | 63.28 | 85.16 | 64.84 | **91.41** | 2 → 1 | 9.65 |
+| **drawn** `g_min` 50 µS, r 0.501 | 57.03 | 85.16 | 61.72 | **91.41** | 2 → 1 | 9.24 |
+
+**What this changes about §9's conclusion.** §9 said the project's accuracy is limited by `g_min`
+through the cell area, and that the `5 Ω/pitch` column was closer to a realistic sky130 design
+point than the `1 Ω/pitch` column. The first half survives and is now sharper; the second half
+does not. On the correct device the realistic point is **1.755 Ω/pitch and 8.75 bits** at the
+project's default `g_min`, and **0.556 Ω/pitch and 10.08 bits** at the best `g_min` — between the
+study's `1 Ω` and `0.25 Ω` columns, not near its `5 Ω` one. §9's headline was pessimistic by
+2.2× in `r_wire` and by 1.1–1.5 effective bits, entirely because of §11.1's device mix-up.
+
+Per-channel calibration holds up everywhere, never missing by more than 1 LSB at any drawn point —
+the same conclusion §9 and `MATMUL.md` reached.
+
+### 11.9 The `g_min` optimum, and it is a real one
+
+Because the cell area is now computed from the target resistance, sweeping `g_min` is nearly free.
+Geometry and currents, at N = 16, V = 0.2 V, `g_max` = 100 µS, 1 µm rails:
+
+| `g_min` [µS] | 1/`g_min` [kΩ] | squares | stripes | pitch [µm] | area [µm²] | `r_wire` [Ω] | δ = `g_max`−`g_min` [µS] | I_cm [µA] | IR drop [mV] | pitch set by |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1000 | 500.1 | 16 | 14.04 | 197 | 1.755 | 99 | 3.2 | 0.048 | urpm gap (x) |
+| 2 | 500 | 250.0 | 10 | 11.01 | 121 | 1.376 | 98 | 6.4 | 0.075 | tap stack + block (y) |
+| 5 | 200 | 100.0 | 8 | 7.40 | 55 | 0.925 | 95 | 16.0 | 0.126 | urpm gap (x) |
+| 10 | 100 | 50.0 | 6 | 5.74 | 33 | 0.717 | 90 | 32.0 | 0.195 | urpm gap (x) |
+| **20** | **50** | **25.0** | **4** | **4.45** | **20** | **0.556** | **80** | **64.0** | **0.302** | tap stack + block (y) |
+| 30 | 33 | 16.7 | 4 | 4.08 | 17 | 0.510 | 70 | 96.0 | 0.416 | urpm gap (x) |
+| 40 | 25 | 12.5 | 4 | 4.08 | 17 | 0.510 | 60 | 128.0 | 0.555 | urpm gap (x) |
+| 50 | 20 | 10.0 | 2 | 4.01 | 16 | 0.501 | 50 | 160.0 | 0.682 | tap stack + block (y) |
+
+`I_cm` is the per-column common-mode floor `N · g_min · V`, the current a column carries with every
+weight at zero. `IR drop` is that current's ladder sum along the column, `Σᵢ i · I · r_col` =
+`r_col · I · N(N+1)/2`.
+
+**The optimum is `g_min` ≈ 20 µS, at 10.08 accumulator bits (rms) and 94.53% calibrated int8
+match.** It is a genuine interior maximum: fidelity climbs monotonically from 8.75 bits at 1 µS to
+10.08 at 20 µS, then falls back to 9.24 at 50 µS. That is 1.3 bits bought, and a **10× smaller
+cell** — 197 µm² down to 20 µm², which at 16 × 16 is a 224.6 µm array shrinking to 71.2 µm.
+
+**The mechanism, which is not quite the one the brief predicted.** The upward half is as expected:
+raising `g_min` shrinks the largest resistor, which shrinks the cell, which shrinks the pitch,
+which cuts `r_wire` — and δ costs only 9% over the first decade because `g_min` cancels exactly in
+the differential pair. The downward half is *not* mainly the common-mode IR drop. That term is
+real and grows 14× across the sweep, but it tops out at 0.68 mV against a 200 mV drive. What
+actually turns the curve over is that **the pitch stops shrinking**:
+
+- the pitch has a floor near **4.0 µm** that the resistor has nothing to do with — in x the
+  `urpm`-to-`urpm` gap plus two enclosures, in y the row rail plus the column tap's met1 island
+  plus their clearances. The `pitch set by` column names the binding constraint at each point, and
+  from 20 µS on it is never the resistor.
+- so past ~20 µS, more `g_min` buys **almost no `r_wire`** (0.556 → 0.501 Ω, 10%) while δ keeps
+  falling (80 → 50 µS, 38%) and the common-mode current keeps rising. All cost, no benefit.
+
+Two caveats on the optimum, both of which move it and neither of which is modelled here:
+
+- **It scales with N.** The IR-drop term is an `N(N+1)/2` ladder, so at N = 32 it is 4× larger
+  (0.191 mV at 1 µS, 2.727 mV at 50 µS) and the turnover moves to lower `g_min`. The 20 µS figure
+  is for the 16 × 16 tile this study uses throughout.
+- **There is no noise floor in this model.** The simulation is a noiseless DC solve and
+  `fp_matmul` decodes by dividing by δ, so halving δ costs nothing here. On real hardware δ sets
+  the signal against the sense amplifier's input-referred noise and the ADC's LSB, and *that* is
+  the pressure that would punish a large `g_min` hardest. **The true optimum is therefore at a
+  lower `g_min` than 20 µS by an amount this project cannot estimate**, because it has no ADC and
+  no noise model — see [`README`](../README.md) on both.
+
+### 11.10 Limitations specific to this section
+
+Everything in §10 still applies except where §11.11 says otherwise. Additionally:
+
+1. **The weights are frozen at tapeout.** Stated once more because it is the whole cost of §11.2.
+   No write, no programming, no endurance or retention story. An inference demonstrator of one
+   fixed matrix.
+2. **`g_max` cells are not drawn, only `g_min` cells.** Every cell in the array is the same drawn
+   resistor. A real weight matrix would draw a different length per cell inside the same pitch;
+   the pitch, which is what this section computes, would not change.
+3. **`poly.9` self-spacing and every `urpm` rule are unchecked** by this deck, as §11.5 details.
+   The layout honours them; DRC did not confirm it.
+4. **LVS checks total length, not the bar subdivision**, and needed a non-default deck switch —
+   §11.6.
+5. **No periphery, no floorplan, still.** No drivers, no sense amplifiers, no decode, no power
+   grid, no fill, no antenna or density checks, no seal ring. A real array's pitch would be
+   larger than 14.04 µm, not smaller.
+6. **One corner.** The 2000 Ω/□ figure is the typical block, and unlike the metal resistances the
+   tech file offers no corner spread for `uhrpoly` at all — all three `variants` blocks carry the
+   same 2000, and the file says so in as many words ("No corner values available for: substrate,
+   xhrpoly, uhrpoly, RDL", `sky130A.tech:5149`). The device's own model has a 2.5% process sigma
+   (`sky130_fd_pr__res_xhigh_po__var_mult`, `dist=gauss std=0.025`) plus a Pelgrom mismatch term,
+   and **none of that is swept here.** For a resistor whose absolute value *is* the weight, that
+   omission is more serious than it was for a wire.
+7. **Still not extraction, and still not sign-off.** §10.1 and §10.9 apply unchanged. DRC clean
+   against one deck at two settings and LVS clean against one netlist is not tapeout.
+
+### 11.11 What this section supersedes
+
+Left in place above rather than rewritten, so the record shows what changed:
+
+| claim | where | status |
+| --- | --- | --- |
+| "sky130's highest-sheet resistor is `xhrpoly` at 319.8 Ω/□" paired with "the narrowest binned `res_xhigh_po` model" | §8 | **wrong** — two different devices, §11.1. The right constant is 2000 Ω/□ |
+| a `g_min` = 1 µS cell is ~30 µm square, so the pitch is 31 µm and the rails cost 3.875 Ω/pitch | §8, §9 | **superseded** — 12.80 µm square, 14.04 µm pitch, 1.755 Ω/pitch |
+| "the `5 Ω/pitch` column is closer to a realistic sky130 design point than the `1 Ω/pitch` column" | §9 | **withdrawn** — the realistic point is 0.5–1.8 Ω/pitch, §11.8 |
+| "the `g_min` serpentine is arithmetic, not a drawn layout" | §10.11 | **superseded** — drawn, DRC'd with FEOL on, and LVS'd |
+| "interconnect only; there is no memory device, because sky130 has none" | §10.4 | **narrowed** — true of RRAM, but a mask-programmed poly resistor is a real sky130 device and is now drawn |
+| "DRC ran with `FEOL = false`" | §10.6 | **superseded for this section only** — §4 through §9 still ran FEOL-off, §11 runs it on |
+| "no crossbar layout has been LVS'd" | §10.8 | **superseded** — a 16 × 16 array of 4096 devices matches, §11.7 |
+| "LVS matched one transistor, on `W` and `L` only" | §10.7 | **still true of §5.** §11.6 is a separate, stronger result on a different device |

@@ -735,12 +735,16 @@ class LvsResult:
 
 
 def run_lvs(gds: Path, netlist: Path, rundir: Path = None, deck: Path = None,
-            klayout: Path = None, timeout: float = 900.0) -> LvsResult:
+            klayout: Path = None, timeout: float = 900.0, extra: dict = None) -> LvsResult:
     """Run the sky130 KLayout LVS deck, invoked the way the PDK's own run_lvs.py does.
 
     Returns a result either way; the caller decides whether a non-match is a failure.
     Success is read off the deck's own stdout verdict rather than the return code, because
     `klayout -b` exits 0 on a clean run of a deck that reported a mismatch.
+
+    `extra` adds further `-rd name=value` switches.  `cell_layout` needs
+    `schematic_simplify=true`, because the deck combines series devices on the layout side
+    inside the extractor and on the schematic side only behind that switch.
     """
     gds, netlist = Path(gds), Path(netlist)
     deck = Path(deck or default_lvs_deck())
@@ -758,6 +762,7 @@ def run_lvs(gds: Path, netlist: Path, rundir: Path = None, deck: Path = None,
            "-rd", f"report={report}", "-rd", f"schematic={netlist}",
            "-rd", f"target_netlist={extracted}", "-rd", "thr=4",
            "-rd", f"lvs_sub={LVS_SUBSTRATE}", "-rd", "convert_subckts=true"]
+    cmd += [a for k, v in (extra or {}).items() for a in ("-rd", f"{k}={v}")]
     t0 = time.perf_counter()
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
