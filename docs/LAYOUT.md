@@ -1072,6 +1072,39 @@ rasterizes each view through the KLayout **application** with sky130's own
 `sky130A.lyp`, so every layer colour and fill pattern is the PDK's rather than invented.
 (The `klayout` pip module cannot do this: it ships the database layer with no renderer.)
 
+### What each polygon is
+
+Start here. Three zoom levels, annotated in microns against the real coordinates rather
+than by eye (`uv run scripts/annotate_layout.py`):
+
+![Annotated sky130 crossbar layout in three panels: the 4x4 array with row rails, column rails, one cell outlined and the 14.04 um pitch marked; one cell showing sixteen poly stripes, licon contacts and the alternating li1 straps; and a wide strip along the cell bottom showing the column terminal at the leftmost stripe, the single via, the row terminal at the rightmost stripe, and the 0.15 um met1 clearance between the column island and the row rail](layout/annotated.png)
+
+The short version:
+
+| what you see | layer | what it does |
+| --- | --- | --- |
+| horizontal blue bars | met1 (68/20) | **row rail**, one per row, driven with the input voltage `x[i]` |
+| vertical magenta bars | met2 (69/20) | **column rail**, one per column, held at virtual ground; the summed current leaves here |
+| red vertical stripes | poly (66/20) | the resistor body — 16 stripes in series make 1 MΩ at 2000 Ω/□ |
+| pink outline round the stripes | poly_rs (66/13) | the resistor marker. Poly *inside* it is the device; outside is terminal. **This edge, not the contact, is what LVS extracts as `L`** |
+| pale yellow at each stripe end | licon (66/44) + npc | contacts from poly up to local interconnect |
+| short bars joining stripe ends | li1 (67/20) | the series straps — top, then bottom, alternating |
+| violet square, bottom left | via (68/44) | the cell's **only** via: drops the met2 column rail onto the cell's met1 island |
+
+Two details worth pulling out, because they are the parts that are not obvious:
+
+**The stripes are straight, and the fold is in li1.** A serpentine in poly would put corners
+in the resistor body, and a corner is worth 0.5–0.6 squares depending on which conformal map
+you believe — so a "precision" resistor whose value depends on counting corners is not
+precise. Straight bars strapped in li1 give an exact square count, for 6.2% more side length.
+
+**Row and column rails cross at every single cell, and that is fine.** They are on different
+metal layers with no via at the crossing. The only via in the cell deliberately connects the
+column rail down to the column terminal's met1 island. Separately, that island and the row
+rail *are* both met1, so they need real spacing: the island bottom sits at 1.150 µm against a
+row-rail top of 1.000 µm, a 0.150 µm gap against the `m1.2` minimum of 0.14 µm. Ten
+nanometres of margin, which is why `tap_stack` computes it rather than guessing.
+
 ### The cell, at two `g_min` values
 
 Left, the project default `g_min` = 1 µS → 1 MΩ → **16 stripes, 12.80 × 11.50 µm**, pitch

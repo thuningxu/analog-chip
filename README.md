@@ -230,12 +230,17 @@ The cell and array are drawn, not described. Full views, the `g_min` = 1 µS ver
 comparison, and instructions for opening the GDS are in
 [docs/LAYOUT.md §12](docs/LAYOUT.md#12-looking-at-the-layout).
 
-![4x4 sky130 crossbar array, 56.2 um across: sixteen 0T1R cells on a 14.04 um pitch, each cell a block of sixteen res_xhigh_po poly resistor stripes, with horizontal met1 row rails and vertical met2 column rails](docs/layout/array-4x4.png)
+![Annotated sky130 crossbar layout in three panels: the 4x4 array with row rails, column rails, one cell outlined and the pitch marked; one cell showing its sixteen poly stripes, licon contacts and li1 series straps; and the cell's bottom strip showing both terminals and the met1 clearance between them](docs/layout/annotated.png)
 
-A 4 × 4 array at the default `g_min` = 1 µS — one mask-programmed poly resistor per
-intersection, row rails horizontal, column rails vertical. `docs/layout/` holds the GDS
-for this and for the 16 × 16 array that was DRC'd with FEOL enabled and LVS-matched
-against an hdl21 netlist of its 4096 devices.
+Row rails are horizontal met1, one per row, driven with the input voltage. Column rails are
+vertical met2, one per column, held at virtual ground. They cross at every cell on different
+metal layers — no via there — which is what makes a crossbar legal. Each cell is one
+mask-programmed `res_xhigh_po` poly resistor, folded into 16 straight stripes strapped in
+series with li1 (straight, because a poly corner is worth 0.5–0.6 of an ill-defined square).
+
+`docs/layout/` also holds the unannotated renders and the GDS itself, including the 16 × 16
+array that was DRC'd with FEOL enabled and LVS-matched against an hdl21 netlist of its 4096
+devices.
 
 ## Cell configurations
 
