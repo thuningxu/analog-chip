@@ -215,7 +215,11 @@ limitations list are in [`docs/MATMUL.md`](docs/MATMUL.md).
 | `layout_oracle.py` | sky130 tech-constant parser, GDS generation and measurement, R/C from geometry, the DRC harness, the LVS attempt |
 | `array_layout.py` | the N×N crossbar interconnect skeleton, derived per-pitch R and C, via/coupling analyses, the accuracy re-run |
 | `cell_layout.py` | a device-level 0T1R cell with a real sky130 poly resistor: cell generator, DRC with **FEOL enabled**, cell and array LVS, the `g_min`/area/IR-drop optimum |
+| `sram6t.py` | a 6T SRAM bitcell on sky130's three `special_*fet_*` devices: cell generator, butterfly-curve SNM, write margin, read upset, five corners |
+| `verify_sram6t.py` | nine machine checks on the bitcell's margins, plus two on the drawn cell under `--layout` |
+| `sram_layout.py` | the bitcell drawn: six devices, DRC with **FEOL enabled**, LVS with probes for what it compares, area against the PDK's own bitcell |
 | `docs/LAYOUT.md` | the layout→parasitics chain: corner provenance, DRC and LVS status, derived parasitics, the `g_min` pitch loop, the device-level cell (§11), limitations |
+| `docs/SRAM6T.md` | the 6T bitcell: the single-bin device constraint, every measured margin and corner, the drawn cell, and the two DRC rules the open PDK uses to forbid its own SRAM devices |
 | `docs/DESIGN.md` | generator hierarchy, the differential-pair derivation, full parameter reference |
 | `docs/REPORT.md` | methodology, verification, results, limitations, reproduction |
 | `docs/MATMUL.md` | the int8 matmul: quantization, the accumulator-width argument, measured fidelity, cost; and the float engine underneath |
@@ -241,6 +245,15 @@ series with li1 (straight, because a poly corner is worth 0.5–0.6 of an ill-de
 `docs/layout/` also holds the unannotated renders and the GDS itself, including the 16 × 16
 array that was DRC'd with FEOL enabled and LVS-matched against an hdl21 netlist of its 4096
 devices.
+
+## A 6T SRAM bitcell, aside from the crossbar
+
+`sram6t.py` builds a real 6T bitcell on sky130's three `special_*fet_*` SRAM devices and
+measures it: read SNM 297 mV at `tt` and 177 mV at the worst corner, write margin 977 mV, and a
+drawn cell that **cannot be DRC clean** because the open PDK's `difftap.1` and `difftap.2` forbid
+the transistor widths its own SRAM models are characterized at — the PDK's own bitcell trips 246
+violations under the same deck. Full measurements, corners, and the diagnosis are in
+[docs/SRAM6T.md](docs/SRAM6T.md).
 
 ## Cell configurations
 
